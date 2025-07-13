@@ -67,3 +67,12 @@ Pets show emotional feedback depending on your habit activity. Their behavior mo
 ```bash
 flutter pub get
 flutter run
+
+## 🔒 License
+
+This project is **proprietary software**.
+
+© 2025 **Javier Gómez**. All rights reserved.
+
+No part of this codebase may be copied, distributed, modified, or used in any form without explicit written permission from the author.
+
