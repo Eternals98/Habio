@@ -1,3 +1,7 @@
+// © 2025 Javier Gómez. All rights reserved.
+// This file is part of the proprietary Habio application.
+// Unauthorized use or distribution is prohibited.
+
 import 'package:flutter/material.dart';
 import 'dart:math' as math; // Para el UniqueKey y colores aleatorios
 import 'screens/login_screen.dart';
