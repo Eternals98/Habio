@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "557450296752",
+    "project_id": "habio-35e46",
+    "storage_bucket": "habio-35e46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:557450296752:android:c3adc42387b95cbe4e6a75",
+        "android_client_info": {
+          "package_name": "com.habio.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-YrcDbZK81ePVy9zoGIh9wsbdewaLnbU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
