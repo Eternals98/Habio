@@ -143,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           : () =>
                               _login(context), // Ejecuta login al hacer clic
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor, // Color del botón
+                    backgroundColor: themeColor, // Color del botón (morado)
                     padding: const EdgeInsets.symmetric(
                       vertical: 16,
                     ), // Espaciado interno
@@ -153,15 +153,31 @@ class _LoginScreenState extends State<LoginScreen> {
                       ), // Bordes redondeados
                     ),
                   ),
-                  child:
-                      _isLoading
-                          ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          ) // Indicador de carga
-                          : const Text(
-                            'Iniciar Sesión', // Texto del botón
-                            style: TextStyle(fontSize: 20, color: Colors.white),
-                          ),
+                  child: SizedBox(
+                    height: 24, // Altura fija para el contenido del botón
+                    child: Center(
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth:
+                                      2, // Grosor del indicador más fino
+                                ),
+                              )
+                              : const Text(
+                                'Iniciar Sesión', // Texto del botón
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color:
+                                      Colors
+                                          .white, // Color explícito para el texto
+                                ),
+                              ),
+                    ),
+                  ),
                 ),
               ),
               // Botón para ir a la pantalla de registro

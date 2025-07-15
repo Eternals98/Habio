@@ -86,11 +86,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 obscureText: true,
                 validator: (value) {
-                  if (value == null || value.isEmpty)
+                  if (value == null || value.isEmpty) {
                     return 'Ingresa tu contraseña';
+                  }
                   if (value.length < 6) return 'Mínimo 6 caracteres';
                   return null;
                 },
+                onFieldSubmitted: (_) => _register(context),
               ),
               const SizedBox(height: 30),
               SizedBox(
@@ -109,7 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
                             'Registrarse',
-                            style: TextStyle(fontSize: 16),
+                            style: TextStyle(fontSize: 16, color: Colors.white),
                           ),
                 ),
               ),
