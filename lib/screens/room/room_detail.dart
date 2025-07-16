@@ -127,6 +127,28 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                     }
                   },
                 ),
+                ElevatedButton(
+                  child: const Text('Crear Random'),
+                  onPressed: () {
+                    if (controller.text.trim().isNotEmpty) {
+                      Navigator.of(context).pop(controller.text.trim());
+                      setDialogState(() {
+                        _selectedMechanic =
+                            Mechanic.values[math.Random().nextInt(
+                              Mechanic.values.length,
+                            )];
+                        _selectedPersonality =
+                            Personality.values[math.Random().nextInt(
+                              Personality.values.length,
+                            )];
+                        _selectedPetType =
+                            PetType.values[math.Random().nextInt(
+                              PetType.values.length,
+                            )];
+                      });
+                    }
+                  },
+                ),
               ],
             );
           },
@@ -134,16 +156,21 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
       },
     );
 
-    if (nombreHabito != null &&
-        _selectedMechanic != null &&
-        _selectedPersonality != null &&
-        _selectedPetType != null) {
+    if (nombreHabito != null && nombreHabito.isNotEmpty) {
       setState(() {
         final newPet = Pet(
           id: math.Random().nextInt(1000000).toString(),
-          mechanic: _selectedMechanic!,
-          personality: _selectedPersonality!,
-          petType: _selectedPetType!,
+          mechanic:
+              _selectedMechanic ??
+              Mechanic.values[math.Random().nextInt(Mechanic.values.length)],
+          personality:
+              _selectedPersonality ??
+              Personality.values[math.Random().nextInt(
+                Personality.values.length,
+              )],
+          petType:
+              _selectedPetType ??
+              PetType.values[math.Random().nextInt(PetType.values.length)],
         );
         final newHabito = MascotaHabito(
           id: math.Random().nextInt(1000000).toString(),
@@ -154,6 +181,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
             email: '',
           ),
           room: widget.lugar,
+          position: const Offset(50, 50),
         );
         _mascotas.add(newHabito);
       });
@@ -246,7 +274,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                 ),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
