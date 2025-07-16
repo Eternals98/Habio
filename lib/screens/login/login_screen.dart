@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../data/auth_service.dart';
@@ -14,7 +16,9 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  final FocusNode _emailFocus = FocusNode(); // Foco para el campo de email
+  final FocusNode _passwordFocus =
+      FocusNode(); // Foco para el campo de contraseña
   bool _isLogin = true; // true = login, false = register
 
   /// Método para normalizar el email: si no tiene @, le agrega @habio.com
@@ -167,5 +171,14 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose(); // Libera el controlador del email
+    _passwordController.dispose(); // Libera el controlador de la contraseña
+    _emailFocus.dispose(); // Libera el nodo de foco del email
+    _passwordFocus.dispose(); // Libera el nodo de foco de la contraseña
+    super.dispose();
   }
 }
