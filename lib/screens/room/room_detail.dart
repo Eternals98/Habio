@@ -194,6 +194,27 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
     });
   }
 
+  void _showHabitoDetails(MascotaHabito habito) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(habito.nombre),
+          content: Text(
+            '${habito.nombre} is a ${habito.pet.petType.description} with ${habito.pet.personality.description} who loves ${habito.pet.mechanic.description}',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cerrar'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -226,24 +247,25 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
               left: habito.position.dx,
               top: habito.position.dy,
               child: GestureDetector(
+                onTap: () => _showHabitoDetails(habito),
                 onPanUpdate: (details) {
                   _updatePosition(
                     habito,
                     Offset(
                       (habito.position.dx + details.delta.dx).clamp(
                         0,
-                        MediaQuery.of(context).size.width - 100,
+                        MediaQuery.of(context).size.width - 150,
                       ),
                       (habito.position.dy + details.delta.dy).clamp(
                         0,
-                        MediaQuery.of(context).size.height - 100,
+                        MediaQuery.of(context).size.height - 150,
                       ),
                     ),
                   );
                 },
                 child: Container(
-                  width: 100,
-                  height: 100,
+                  width: 150,
+                  height: 150,
                   decoration: BoxDecoration(
                     border: Border.all(width: 1.5),
                     borderRadius: BorderRadius.circular(8),
@@ -255,7 +277,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                         habito.nombre,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                         maxLines: 2,
@@ -263,9 +285,25 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.pet.petType.description,
+                        habito.pet.petType.name,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 10),
+                        style: const TextStyle(fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        habito.pet.personality.name,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        habito.pet.mechanic.name,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
