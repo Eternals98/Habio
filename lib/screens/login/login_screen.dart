@@ -116,9 +116,18 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
 
               // Campo contraseña
-              TextField(
+              TextFormField(
                 controller: _passwordController,
                 obscureText: true,
+                validator: (value) {
+                  // Validaciones para el campo de contraseña
+                  if (value == null || value.isEmpty) {
+                    return 'Ingresa tu contraseña';
+                  }
+                  if (value.length < 6) return 'Mínimo 6 caracteres';
+                  return null;
+                },
+                onFieldSubmitted: (_) => _handleLogin(),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   prefixIcon: const Icon(Icons.lock),
