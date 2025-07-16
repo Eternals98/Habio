@@ -127,7 +127,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (value.length < 6) return 'Mínimo 6 caracteres';
                   return null;
                 },
-                onFieldSubmitted: (_) => _handleLogin(),
+                onFieldSubmitted:
+                    (_) => _isLogin ? _handleLogin() : _handleRegister(),
                 decoration: InputDecoration(
                   labelText: 'Contraseña',
                   prefixIcon: const Icon(Icons.lock),
