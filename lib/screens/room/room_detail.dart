@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:per_habit/models/mascotaHabito.dart';
+import 'package:per_habit/models/habit.dart';
 import 'package:per_habit/models/pet.dart';
-import 'package:per_habit/models/rooms.dart';
+import 'package:per_habit/models/room.dart';
 import 'package:per_habit/models/user_model.dart';
 import 'package:per_habit/types/mechanic.dart';
 import 'package:per_habit/types/personality.dart';

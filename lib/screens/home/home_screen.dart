@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:per_habit/models/rooms.dart';
+import 'package:per_habit/models/room.dart';
 import 'package:per_habit/screens/room/room_detail.dart';
 import 'package:per_habit/utils/sizes.dart';
 import 'package:per_habit/widgets/room_card.dart';
