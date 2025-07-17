@@ -1,8 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
-import 'package:per_habit/features/auth/models/user_model.dart';
 import 'package:per_habit/features/habit/types/mechanic.dart';
 import 'package:per_habit/features/habit/types/personality.dart';
 import 'package:per_habit/features/habit/types/petType.dart';
@@ -12,8 +12,9 @@ class PetHabitService {
   Future<void> addHabit({
     required BuildContext context,
     required List<PetHabit> petHabits,
-    required Room room,
+    required String room,
     required Function setState,
+    required String user,
   }) async {
     Mechanic? selectedMechanic;
     Personality? selectedPersonality;
@@ -127,24 +128,19 @@ class PetHabitService {
     );
 
     if (nameHabit != null && nameHabit.isNotEmpty) {
-      setState(() {
+      try {
+        // Crear el nuevo PetHabit
         final newHabit = PetHabit(
           id: UniqueKey().toString(),
           name: nameHabit,
-          userModel: UserModel(
-            uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
-            email: '',
-          ),
+          userModel: user,
           room: room,
           mechanic:
               selectedMechanic ??
               PetHabit.random(
                 UniqueKey().toString(),
                 nameHabit,
-                UserModel(
-                  uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
-                  email: '',
-                ),
+                user,
                 room,
               ).mechanic,
           personality:
@@ -152,10 +148,7 @@ class PetHabitService {
               PetHabit.random(
                 UniqueKey().toString(),
                 nameHabit,
-                UserModel(
-                  uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
-                  email: '',
-                ),
+                user,
                 room,
               ).personality,
           petType:
@@ -163,21 +156,48 @@ class PetHabitService {
               PetHabit.random(
                 UniqueKey().toString(),
                 nameHabit,
-                UserModel(
-                  uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
-                  email: '',
-                ),
+                user,
                 room,
               ).petType,
           position: const Offset(50, 50),
           createdAt: DateTime.now(),
         );
-        if (kDebugMode) {
-          print(newHabit); // Log all attributes
+
+        // Actualizar la lista local de petHabits
+        setState(() {
+          petHabits.add(newHabit);
+          if (kDebugMode) {
+            print(newHabit);
+          }
+        });
+
+        // Actualizar el Room en Firestore
+        final roomDoc =
+            await FirebaseFirestore.instance
+                .collection('rooms')
+                .doc(room)
+                .get();
+        if (roomDoc.exists) {
+          final currentPets =
+              (roomDoc.data()?['pets'] as List<dynamic>?)
+                  ?.map((pet) => PetHabit.fromMap(pet as Map<String, dynamic>))
+                  .toList() ??
+              [];
+          currentPets.add(newHabit);
+
+          await FirebaseFirestore.instance.collection('rooms').doc(room).update(
+            {'pets': currentPets.map((pet) => pet.toMap()).toList()},
+          );
+        } else {
+          throw Exception('Room no encontrado en Firestore');
         }
-        petHabits.add(newHabit);
-        room.pets = petHabits; // Update lugar's mascotas
-      });
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al crear el hábito: $e')),
+          );
+        }
+      }
     }
   }
 

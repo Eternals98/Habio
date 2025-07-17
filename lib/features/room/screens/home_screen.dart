@@ -109,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       rooms: _rooms,
       setState: setState,
+      owner: user!.uid,
       scrollToSelected: (index) {
         _selectedIndex = index;
         _scrollToSelected(index);
