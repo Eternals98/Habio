@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
 import 'package:per_habit/features/auth/models/user_model.dart';
 
-class LugarService {
+class RoomService {
   // Crear un lugar
-  Future<void> addLugar({
+  Future<void> addRoom({
     required BuildContext context,
-    required List<Lugar> lugares,
+    required List<Room> rooms,
     required Function setState,
     required Function(int) scrollToSelected,
   }) async {
-    final String? nombreLugar = await showDialog<String>(
+    final String? nameRoom = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         TextEditingController controller = TextEditingController();
@@ -42,20 +42,20 @@ class LugarService {
       },
     );
 
-    if (nombreLugar != null && nombreLugar.isNotEmpty) {
+    if (nameRoom != null && nameRoom.isNotEmpty) {
       setState(() {
-        final nuevoLugar = Lugar(
+        final newRoom = Room(
           id: UniqueKey().toString(),
-          nombre: nombreLugar,
+          name: nameRoom,
           owner: UserModel(uid: "11w", email: "leeank"),
           createdAt: DateTime.now(),
           shared: false,
         );
         if (kDebugMode) {
-          print(nuevoLugar.toString());
+          print(newRoom.toString());
         }
-        lugares.add(nuevoLugar);
-        final selectedIndex = lugares.length - 1;
+        rooms.add(newRoom);
+        final selectedIndex = rooms.length - 1;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
             scrollToSelected(selectedIndex);
@@ -66,19 +66,19 @@ class LugarService {
   }
 
   // Actualizar un lugar
-  Future<void> updateLugar({
+  Future<void> updateRoom({
     required BuildContext context,
-    required Lugar lugar,
-    required List<Lugar> lugares,
+    required Room room,
+    required List<Room> rooms,
     required Function setState,
     required int selectedIndex,
     required Function(int) scrollToSelected,
   }) async {
-    final String? nuevoNombre = await showDialog<String>(
+    final String? newName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         TextEditingController controller = TextEditingController(
-          text: lugar.nombre,
+          text: room.name,
         );
         return AlertDialog(
           title: const Text('Editar Lugar'),
@@ -107,22 +107,22 @@ class LugarService {
       },
     );
 
-    if (nuevoNombre != null && nuevoNombre.isNotEmpty) {
+    if (newName != null && newName.isNotEmpty) {
       setState(() {
-        final index = lugares.indexWhere((l) => l.id == lugar.id);
+        final index = rooms.indexWhere((l) => l.id == room.id);
         if (index != -1) {
-          lugares[index] = Lugar(
-            id: lugar.id,
-            nombre: nuevoNombre,
-            mascotas: lugar.mascotas,
-            members: lugar.members,
-            owner: lugar.owner,
-            createdAt: lugar.createdAt,
-            shared: lugar.shared, // Preserve existing createdAt
+          rooms[index] = Room(
+            id: room.id,
+            name: newName,
+            pets: room.pets,
+            members: room.members,
+            owner: room.owner,
+            createdAt: room.createdAt,
+            shared: room.shared, // Preserve existing createdAt
           );
         }
         if (kDebugMode) {
-          print(lugares[index].toString());
+          print(rooms[index].toString());
         }
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (context.mounted) {
@@ -136,8 +136,8 @@ class LugarService {
   // Añadir un miembro
   Future<void> addMember({
     required BuildContext context,
-    required Lugar lugar,
-    required List<Lugar> lugares,
+    required Room room,
+    required List<Room> rooms,
     required Function setState,
   }) async {
     final String? email = await showDialog<String>(
@@ -183,25 +183,25 @@ class LugarService {
 
     if (email != null && email.isNotEmpty) {
       setState(() {
-        final index = lugares.indexWhere((l) => l.id == lugar.id);
+        final index = rooms.indexWhere((l) => l.id == room.id);
         if (index != -1) {
           final newMember = UserModel(
             uid: UniqueKey().toString(),
             email: email,
           );
-          final updatedMembers = List<UserModel>.from(lugar.members)
+          final updatedMembers = List<UserModel>.from(room.members)
             ..add(newMember);
-          lugares[index] = Lugar(
-            id: lugar.id,
-            nombre: lugar.nombre,
-            mascotas: lugar.mascotas,
+          rooms[index] = Room(
+            id: room.id,
+            name: room.name,
+            pets: room.pets,
             members: updatedMembers,
-            owner: lugar.owner,
-            createdAt: lugar.createdAt,
+            owner: room.owner,
+            createdAt: room.createdAt,
             shared: true, // Set shared to true when adding a member
           );
           if (kDebugMode) {
-            print(lugares[index].toString());
+            print(rooms[index].toString());
           }
         }
       });
@@ -209,10 +209,10 @@ class LugarService {
   }
 
   // Eliminar un lugar
-  void deleteLugar({
+  void deleteRoom({
     required BuildContext context,
-    required Lugar lugar,
-    required List<Lugar> lugares,
+    required Room room,
+    required List<Room> rooms,
     required Function setState,
     required int selectedIndex,
     required Function(int) scrollToSelected,
@@ -223,7 +223,7 @@ class LugarService {
         return AlertDialog(
           title: const Text('Eliminar Lugar'),
           content: Text(
-            '¿Estás seguro de que quieres eliminar "${lugar.nombre}"?',
+            '¿Estás seguro de que quieres eliminar "${room.name}"?',
           ),
           actions: <Widget>[
             TextButton(
@@ -241,14 +241,14 @@ class LugarService {
 
     if (confirm == true) {
       setState(() {
-        lugares.removeWhere((l) => l.id == lugar.id);
+        rooms.removeWhere((l) => l.id == room.id);
         int newIndex = selectedIndex;
-        if (selectedIndex >= lugares.length && lugares.isNotEmpty) {
-          newIndex = lugares.length - 1;
-        } else if (lugares.isEmpty) {
+        if (selectedIndex >= rooms.length && rooms.isNotEmpty) {
+          newIndex = rooms.length - 1;
+        } else if (rooms.isEmpty) {
           newIndex = -1;
         }
-        if (lugares.isNotEmpty && context.mounted) {
+        if (rooms.isNotEmpty && context.mounted) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               scrollToSelected(newIndex);

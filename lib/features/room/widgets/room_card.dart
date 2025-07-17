@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
 
-class LugarCard extends StatelessWidget {
-  final Lugar lugar;
+class RoomCard extends StatelessWidget {
+  final Room room;
   final double width;
   final double height;
   final double margin;
@@ -12,8 +12,8 @@ class LugarCard extends StatelessWidget {
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
-  const LugarCard({
-    required this.lugar,
+  const RoomCard({
+    required this.room,
     required this.width,
     required this.height,
     required this.margin,
@@ -42,7 +42,7 @@ class LugarCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Text(
-              lugar.nombre,
+              room.name,
               textAlign: TextAlign.center,
               style: const TextStyle(fontWeight: FontWeight.bold),
               maxLines: 2,

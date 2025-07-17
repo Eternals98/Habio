@@ -7,19 +7,19 @@ import 'package:per_habit/features/habit/types/mechanic.dart';
 import 'package:per_habit/features/habit/types/personality.dart';
 import 'package:per_habit/features/habit/types/petType.dart';
 
-class MascotaHabitoService {
+class PetHabitService {
   // Crear un hábito
-  Future<void> addHabito({
+  Future<void> addHabit({
     required BuildContext context,
-    required List<MascotaHabito> mascotas,
-    required Lugar lugar,
+    required List<PetHabit> petHabits,
+    required Room room,
     required Function setState,
   }) async {
     Mechanic? selectedMechanic;
     Personality? selectedPersonality;
     PetType? selectedPetType;
 
-    final String? nombreHabito = await showDialog<String>(
+    final String? nameHabit = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         TextEditingController controller = TextEditingController();
@@ -126,78 +126,78 @@ class MascotaHabitoService {
       },
     );
 
-    if (nombreHabito != null && nombreHabito.isNotEmpty) {
+    if (nameHabit != null && nameHabit.isNotEmpty) {
       setState(() {
-        final newHabito = MascotaHabito(
+        final newHabit = PetHabit(
           id: UniqueKey().toString(),
-          nombre: nombreHabito,
+          name: nameHabit,
           userModel: UserModel(
             uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
             email: '',
           ),
-          room: lugar,
+          room: room,
           mechanic:
               selectedMechanic ??
-              MascotaHabito.random(
+              PetHabit.random(
                 UniqueKey().toString(),
-                nombreHabito,
+                nameHabit,
                 UserModel(
                   uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
                   email: '',
                 ),
-                lugar,
+                room,
               ).mechanic,
           personality:
               selectedPersonality ??
-              MascotaHabito.random(
+              PetHabit.random(
                 UniqueKey().toString(),
-                nombreHabito,
+                nameHabit,
                 UserModel(
                   uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
                   email: '',
                 ),
-                lugar,
+                room,
               ).personality,
           petType:
               selectedPetType ??
-              MascotaHabito.random(
+              PetHabit.random(
                 UniqueKey().toString(),
-                nombreHabito,
+                nameHabit,
                 UserModel(
                   uid: 'user_${DateTime.now().millisecondsSinceEpoch}',
                   email: '',
                 ),
-                lugar,
+                room,
               ).petType,
           position: const Offset(50, 50),
           createdAt: DateTime.now(),
         );
         if (kDebugMode) {
-          print(newHabito); // Log all attributes
+          print(newHabit); // Log all attributes
         }
-        mascotas.add(newHabito);
-        lugar.mascotas = mascotas; // Update lugar's mascotas
+        petHabits.add(newHabit);
+        room.pets = petHabits; // Update lugar's mascotas
       });
     }
   }
 
   // Actualizar un hábito
-  Future<void> updateHabito({
+  Future<void> updateHabit({
     required BuildContext context,
-    required MascotaHabito habito,
-    required List<MascotaHabito> mascotas,
-    required Lugar lugar,
+    required PetHabit habit,
+    required List<PetHabit> petHabits,
+    required Room room,
     required Function setState,
   }) async {
-    Mechanic? selectedMechanic = habito.mechanic;
-    Personality? selectedPersonality = habito.personality;
-    PetType? selectedPetType = habito.petType;
+    Mechanic? selectedMechanic = habit.mechanic;
+    Personality? selectedPersonality = habit.personality;
+    PetType? selectedPetType = habit.petType;
 
-    final String? nuevoNombre = await showDialog<String>(
+    final String? newName = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         TextEditingController controller = TextEditingController(
-          text: habito.nombre,
+          text: habit.name,
         );
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -294,33 +294,33 @@ class MascotaHabitoService {
       },
     );
 
-    if (nuevoNombre != null && nuevoNombre.isNotEmpty) {
+    if (newName != null && newName.isNotEmpty) {
       setState(() {
-        final index = mascotas.indexWhere((m) => m.id == habito.id);
+        final index = petHabits.indexWhere((m) => m.id == habit.id);
         if (index != -1) {
-          mascotas[index] = MascotaHabito(
-            id: habito.id,
-            nombre: nuevoNombre,
-            userModel: habito.userModel,
-            room: habito.room,
+          petHabits[index] = PetHabit(
+            id: habit.id,
+            name: newName,
+            userModel: habit.userModel,
+            room: habit.room,
             mechanic: selectedMechanic!,
             personality: selectedPersonality!,
             petType: selectedPetType!,
-            position: habito.position,
-            createdAt: habito.createdAt, // Preserve existing createdAt
+            position: habit.position,
+            createdAt: habit.createdAt, // Preserve existing createdAt
           );
-          lugar.mascotas = mascotas; // Update lugar's mascotas
+          room.pets = petHabits; // Update lugar's mascotas
         }
       });
     }
   }
 
   // Eliminar un hábito
-  Future<void> deleteHabito({
+  Future<void> deleteHabit({
     required BuildContext context,
-    required MascotaHabito habito,
-    required List<MascotaHabito> mascotas,
-    required Lugar lugar,
+    required PetHabit habit,
+    required List<PetHabit> petHabits,
+    required Room room,
     required Function setState,
   }) async {
     final bool? confirm = await showDialog<bool>(
@@ -329,7 +329,7 @@ class MascotaHabitoService {
         return AlertDialog(
           title: const Text('Eliminar Hábito'),
           content: Text(
-            '¿Estás seguro de que quieres eliminar "${habito.nombre}"?',
+            '¿Estás seguro de que quieres eliminar "${habit.name}"?',
           ),
           actions: <Widget>[
             TextButton(
@@ -347,8 +347,8 @@ class MascotaHabitoService {
 
     if (confirm == true) {
       setState(() {
-        mascotas.removeWhere((m) => m.id == habito.id);
-        lugar.mascotas = mascotas; // Update lugar's mascotas
+        petHabits.removeWhere((m) => m.id == habit.id);
+        room.pets = petHabits; // Update lugar's mascotas
       });
     }
   }

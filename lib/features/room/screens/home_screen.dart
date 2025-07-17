@@ -17,10 +17,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final List<Lugar> _lugares = [];
+  final List<Room> _rooms = [];
   int _selectedIndex = -1;
   final ScrollController _scrollController = ScrollController();
-  final LugarService _lugarService = LugarService();
+  final RoomService _roomService = RoomService();
   final user = FirebaseAuth.instance.currentUser;
 
   static const _desktopBreakpoint = 800.0;
@@ -50,9 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _scrollToSelected(int index) {
-    if (!_scrollController.hasClients ||
-        index < 0 ||
-        index >= _lugares.length) {
+    if (!_scrollController.hasClients || index < 0 || index >= _rooms.length) {
       return;
     }
 
@@ -78,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _selectLugar(int index) {
+  void _selectRoom(int index) {
     if (_selectedIndex == index) return;
     setState(() {
       _selectedIndex = index;
@@ -90,14 +88,14 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _navigateToLugarDetalle(Lugar lugar) {
+  void _navigateToRoomDetails(Room room) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder:
-            (context) => LugarDetalleScreen(
-              lugar: lugar,
-              lugares: _lugares,
+            (context) => RoomDetailsScreen(
+              room: room,
+              rooms: _rooms,
               setState: setState,
               selectedIndex: _selectedIndex,
               scrollToSelected: _scrollToSelected,
@@ -106,10 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _addLugar() {
-    _lugarService.addLugar(
+  void _addRoom() {
+    _roomService.addRoom(
       context: context,
-      lugares: _lugares,
+      rooms: _rooms,
       setState: setState,
       scrollToSelected: (index) {
         _selectedIndex = index;
@@ -118,22 +116,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _updateLugar(Lugar lugar) {
-    _lugarService.updateLugar(
+  void _updateRoom(Room room) {
+    _roomService.updateRoom(
       context: context,
-      lugar: lugar,
-      lugares: _lugares,
+      room: room,
+      rooms: _rooms,
       setState: setState,
       selectedIndex: _selectedIndex,
       scrollToSelected: _scrollToSelected,
     );
   }
 
-  void _deleteLugar(Lugar lugar) {
-    _lugarService.deleteLugar(
+  void _deleteRoom(Room room) {
+    _roomService.deleteRoom(
       context: context,
-      lugar: lugar,
-      lugares: _lugares,
+      room: room,
+      rooms: _rooms,
       setState: setState,
       selectedIndex: _selectedIndex,
       scrollToSelected: (index) {
@@ -157,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final sizes = _calculateSizes(screenWidth);
     Widget bodyContent;
 
-    if (_lugares.isEmpty) {
+    if (_rooms.isEmpty) {
       bodyContent = Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -172,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.add_circle_outline_rounded),
               label: const Text("Crear Lugar"),
-              onPressed: _addLugar,
+              onPressed: _addRoom,
             ),
           ],
         ),
@@ -196,16 +194,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _scrollController,
                 padding: EdgeInsets.symmetric(horizontal: sizes.padding),
                 scrollDirection: Axis.horizontal,
-                itemCount: _lugares.length + 1,
+                itemCount: _rooms.length + 1,
                 itemBuilder: (context, index) {
-                  if (index == _lugares.length) {
+                  if (index == _rooms.length) {
                     return Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: sizes.horizontalMargin,
                         vertical: 10,
                       ),
                       child: InkWell(
-                        onTap: _addLugar,
+                        onTap: _addRoom,
                         child: Container(
                           width: sizes.containerWidth * 0.6,
                           height: sizes.containerHeight,
@@ -218,17 +216,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     );
                   }
 
-                  final lugar = _lugares[index];
-                  return LugarCard(
-                    lugar: lugar,
+                  final room = _rooms[index];
+                  return RoomCard(
+                    room: room,
                     width: sizes.containerWidth,
                     height: sizes.containerHeight,
                     margin: sizes.horizontalMargin,
                     isSelected: _selectedIndex == index,
-                    onTap: () => _selectLugar(index),
-                    onAbrir: () => _navigateToLugarDetalle(lugar),
-                    onEdit: () => _updateLugar(lugar),
-                    onDelete: () => _deleteLugar(lugar),
+                    onTap: () => _selectRoom(index),
+                    onAbrir: () => _navigateToRoomDetails(room),
+                    onEdit: () => _updateRoom(room),
+                    onDelete: () => _deleteRoom(room),
                   );
                 },
               ),
@@ -242,10 +240,10 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
-          if (_lugares.isNotEmpty)
+          if (_rooms.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
-              onPressed: _addLugar,
+              onPressed: _addRoom,
               tooltip: 'Crear Lugar',
             ),
           PopupMenuButton<String>(

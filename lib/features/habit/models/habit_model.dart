@@ -9,20 +9,20 @@ import 'package:per_habit/features/habit/types/mechanic.dart';
 import 'package:per_habit/features/habit/types/personality.dart';
 import 'package:per_habit/features/habit/types/petType.dart';
 
-class MascotaHabito {
+class PetHabit {
   final String id;
-  String nombre;
+  String name;
   UserModel userModel;
-  Lugar room;
+  Room room;
   Mechanic mechanic;
   Personality personality;
   PetType petType;
   final DateTime createdAt;
   Offset position; // Add position for dragging
 
-  MascotaHabito({
+  PetHabit({
     required this.id,
-    required this.nombre,
+    required this.name,
     required this.userModel,
     required this.room,
     required this.mechanic,
@@ -32,16 +32,11 @@ class MascotaHabito {
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
-  factory MascotaHabito.random(
-    String id,
-    String name,
-    UserModel user,
-    Lugar room,
-  ) {
+  factory PetHabit.random(String id, String name, UserModel user, Room room) {
     final random = math.Random();
-    return MascotaHabito(
+    return PetHabit(
       id: id,
-      nombre: name,
+      name: name,
       userModel: user,
       room: room,
       mechanic: Mechanic.values[random.nextInt(Mechanic.values.length)],
@@ -55,6 +50,6 @@ class MascotaHabito {
 
   @override
   String toString() {
-    return 'Habito(id: $id, nombre: $nombre, usuario: $userModel, room: $room, mechanic: $mechanic, personality: $personality, petType: $petType createdAt: $createdAt)';
+    return 'Habit(id: $id, name: $name, user: $userModel, room: $room, mechanic: $mechanic, personality: $personality, petType: $petType createdAt: $createdAt)';
   }
 }

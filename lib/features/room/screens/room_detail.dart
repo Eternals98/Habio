@@ -4,81 +4,81 @@ import 'package:per_habit/features/room/services/room_service.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
 
-class LugarDetalleScreen extends StatefulWidget {
-  final Lugar lugar;
-  final List<Lugar> lugares;
+class RoomDetailsScreen extends StatefulWidget {
+  final Room room;
+  final List<Room> rooms;
   final Function setState;
   final int selectedIndex;
   final Function(int) scrollToSelected;
 
-  const LugarDetalleScreen({
+  const RoomDetailsScreen({
     super.key,
-    required this.lugar,
-    required this.lugares,
+    required this.room,
+    required this.rooms,
     required this.setState,
     required this.selectedIndex,
     required this.scrollToSelected,
   });
 
   @override
-  State<LugarDetalleScreen> createState() => _LugarDetalleScreenState();
+  State<RoomDetailsScreen> createState() => _RoomDetailsScreenState();
 }
 
-class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
-  late List<MascotaHabito> _mascotas;
-  final LugarService _lugarService = LugarService();
-  final MascotaHabitoService _mascotaHabitoService = MascotaHabitoService();
+class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
+  late List<PetHabit> _petHabits;
+  final RoomService _roomService = RoomService();
+  final PetHabitService _petHabitService = PetHabitService();
 
   @override
   void initState() {
     super.initState();
-    _mascotas = List.from(widget.lugar.mascotas);
+    _petHabits = List.from(widget.room.pets);
   }
 
-  void _addHabito() {
-    _mascotaHabitoService.addHabito(
+  void _addHabit() {
+    _petHabitService.addHabit(
       context: context,
-      mascotas: _mascotas,
-      lugar: widget.lugar,
+      petHabits: _petHabits,
+      room: widget.room,
       setState: setState,
     );
   }
 
-  void _updatePosition(MascotaHabito habito, Offset newPosition) {
+  void _updatePosition(PetHabit habit, Offset newPosition) {
     setState(() {
-      habito.position = newPosition;
-      widget.lugar.mascotas = _mascotas;
+      habit.position = newPosition;
+      widget.room.pets = _petHabits;
     });
   }
 
-  void _editHabito(MascotaHabito habito) {
-    _mascotaHabitoService.updateHabito(
+  void _editHabit(PetHabit habit) {
+    _petHabitService.updateHabit(
       context: context,
-      habito: habito,
-      mascotas: _mascotas,
-      lugar: widget.lugar,
+      habit: habit,
+      petHabits: _petHabits,
+      room: widget.room,
       setState: setState,
     );
   }
 
-  void _deleteHabito(MascotaHabito habito) {
-    _mascotaHabitoService.deleteHabito(
+  void _deleteHabit(PetHabit habit) {
+    _petHabitService.deleteHabit(
       context: context,
-      habito: habito,
-      mascotas: _mascotas,
-      lugar: widget.lugar,
+      habit: habit,
+      petHabits: _petHabits,
+      room: widget.room,
       setState: setState,
     );
   }
 
-  void _showHabitoDetails(MascotaHabito habito) {
+  void _showHabitoDetails(PetHabit habit) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(habito.nombre),
+          title: Text(habit.name),
           content: Text(
-            '${habito.nombre} is a ${habito.petType.description} with ${habito.personality.description} who loves ${habito.mechanic.description}',
+            '${habit.name} is a ${habit.petType.description} with ${habit.personality.description} who loves ${habit.mechanic.description}',
             textAlign: TextAlign.center,
           ),
           actions: [
@@ -92,22 +92,22 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
     );
   }
 
-  void _editLugar() {
-    _lugarService.updateLugar(
+  void _editRoom() {
+    _roomService.updateRoom(
       context: context,
-      lugar: widget.lugar,
-      lugares: widget.lugares,
+      room: widget.room,
+      rooms: widget.rooms,
       setState: widget.setState,
       selectedIndex: widget.selectedIndex,
       scrollToSelected: widget.scrollToSelected,
     );
   }
 
-  void _deleteLugar() {
-    _lugarService.deleteLugar(
+  void _deleteRoom() {
+    _roomService.deleteRoom(
       context: context,
-      lugar: widget.lugar,
-      lugares: widget.lugares,
+      room: widget.room,
+      rooms: widget.rooms,
       setState: widget.setState,
       selectedIndex: widget.selectedIndex,
       scrollToSelected: widget.scrollToSelected,
@@ -116,10 +116,10 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
   }
 
   void _inviteMember() {
-    _lugarService.addMember(
+    _roomService.addMember(
       context: context,
-      lugar: widget.lugar,
-      lugares: widget.lugares,
+      room: widget.room,
+      rooms: widget.rooms,
       setState: widget.setState,
     );
   }
@@ -128,7 +128,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.lugar.nombre),
+        title: Text(widget.room.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add),
@@ -137,13 +137,13 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: _editLugar,
-            tooltip: 'Editar Lugar',
+            onPressed: _editRoom,
+            tooltip: 'Editar Room',
           ),
           IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: _deleteLugar,
-            tooltip: 'Eliminar Lugar',
+            onPressed: _deleteRoom,
+            tooltip: 'Eliminar Room',
           ),
         ],
       ),
@@ -155,36 +155,36 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
               children: [
                 const Icon(Icons.category_rounded, size: 100),
                 const SizedBox(height: 20),
-                Text('Detalles de "${widget.lugar.nombre}"'),
+                Text('Detalles de "${widget.room.name}"'),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.add_circle_outline_rounded),
                   label: const Text('Añadir Hábito'),
-                  onPressed: _addHabito,
+                  onPressed: _addHabit,
                 ),
                 const SizedBox(height: 20),
-                if (_mascotas.isEmpty)
+                if (_petHabits.isEmpty)
                   const Text(
-                    'Aquí se mostrarán las mascotas (hábitos) de este lugar.',
+                    'Aquí se mostrarán las pets (hábitos) de este room.',
                   ),
               ],
             ),
           ),
-          ..._mascotas.map((habito) {
+          ..._petHabits.map((habit) {
             return Positioned(
-              left: habito.position.dx,
-              top: habito.position.dy,
+              left: habit.position.dx,
+              top: habit.position.dy,
               child: GestureDetector(
-                onTap: () => _showHabitoDetails(habito),
+                onTap: () => _showHabitoDetails(habit),
                 onPanUpdate: (details) {
                   _updatePosition(
-                    habito,
+                    habit,
                     Offset(
-                      (habito.position.dx + details.delta.dx).clamp(
+                      (habit.position.dx + details.delta.dx).clamp(
                         0,
                         MediaQuery.of(context).size.width - 150,
                       ),
-                      (habito.position.dy + details.delta.dy).clamp(
+                      (habit.position.dy + details.delta.dy).clamp(
                         0,
                         MediaQuery.of(context).size.height - 150,
                       ),
@@ -202,7 +202,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        habito.nombre,
+                        habit.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           fontSize: 14,
@@ -213,7 +213,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.petType.name,
+                        habit.petType.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
@@ -221,7 +221,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.personality.name,
+                        habit.personality.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
@@ -229,7 +229,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.mechanic.name,
+                        habit.mechanic.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
@@ -241,12 +241,12 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.edit, size: 16),
-                            onPressed: () => _editHabito(habito),
+                            onPressed: () => _editHabit(habit),
                             tooltip: 'Editar Hábito',
                           ),
                           IconButton(
                             icon: const Icon(Icons.delete, size: 16),
-                            onPressed: () => _deleteHabito(habito),
+                            onPressed: () => _deleteHabit(habit),
                             tooltip: 'Eliminar Hábito',
                           ),
                         ],

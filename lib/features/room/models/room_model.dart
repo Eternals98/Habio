@@ -1,19 +1,19 @@
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/auth/models/user_model.dart';
 
-class Lugar {
+class Room {
   final String id;
-  String nombre;
-  List<MascotaHabito> mascotas;
+  String name;
+  List<PetHabit> pets;
   List<UserModel> members;
   UserModel owner;
   final DateTime createdAt;
   bool shared;
 
-  Lugar({
+  Room({
     required this.id,
-    required this.nombre,
-    this.mascotas = const [],
+    required this.name,
+    this.pets = const [],
     this.members = const [],
     required this.owner,
     DateTime? createdAt,
@@ -22,6 +22,6 @@ class Lugar {
 
   @override
   String toString() {
-    return 'Lugar(id: $id, nombre: $nombre, mascotas: $mascotas, members: $members, owner: $owner, shared: $shared createdAt: $createdAt)';
+    return 'Lugar(id: $id, name: $name, mascotas: $pets, members: $members, owner: $owner, shared: $shared createdAt: $createdAt)';
   }
 }
