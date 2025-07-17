@@ -39,9 +39,9 @@ class Room {
       id: map['id'] ?? '',
       name: map['name'] ?? '',
       pets:
-          (map['pets'] as List<dynamic>?)
-              ?.map((pet) => PetHabit.fromMap(pet as Map<String, dynamic>))
-              .toList() ??
+          (map['pets'] as List<dynamic>?)?.map((pet) {
+            return PetHabit.fromMap(pet as Map<String, dynamic>);
+          }).toList() ??
           [],
       members: (map['members'] as List<dynamic>?)?.cast<String>() ?? [],
       owner: map['owner'] ?? '',

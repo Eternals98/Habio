@@ -3,6 +3,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
 import 'package:per_habit/features/auth/models/user_model.dart';
 
@@ -215,6 +216,9 @@ class RoomService {
 
         if (querySnapshot.docs.isNotEmpty) {
           final doc = querySnapshot.docs.first;
+          if (kDebugMode) {
+            print('Documento encontrado: ${doc.data()}');
+          }
           final newMember = UserModel.fromMap(doc.id, doc.data());
           if (kDebugMode) {
             print('Usuario encontrado: ${newMember.uid}');
@@ -236,7 +240,7 @@ class RoomService {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('El usuario ya es miembro de este lugar'),
+                      content: Text('El usuario ya es miembro del lugar'),
                     ),
                   );
                 }
@@ -278,9 +282,23 @@ class RoomService {
               .doc(room.id);
           final roomDoc = await roomDocRef.get();
           if (roomDoc.exists) {
+            if (kDebugMode) {
+              print('Documento de Room en Firestore: ${roomDoc.data()}');
+            }
+            // Obtener hábitos de la subcolección
+            final habitsSnapshot = await roomDocRef.collection('habits').get();
+            final habits =
+                habitsSnapshot.docs
+                    .map((doc) => PetHabit.fromMap(doc.data()))
+                    .toList();
+            if (kDebugMode) {
+              print('Hábitos recuperados de la subcolección: $habits');
+            }
+            // Actualizar el documento principal con members y pets
             await roomDocRef.update({
               'members': FieldValue.arrayUnion([newMember.uid]),
               'shared': true,
+              'pets': habits.map((habit) => habit.toMap()).toList(),
             });
             if (kDebugMode) {
               print(
@@ -291,6 +309,11 @@ class RoomService {
             // Recargar el Room desde Firestore
             final updatedRoomDoc = await roomDocRef.get();
             if (updatedRoomDoc.exists) {
+              if (kDebugMode) {
+                print(
+                  'Documento recargado de Firestore: ${updatedRoomDoc.data()}',
+                );
+              }
               final updatedRoom = Room.fromMap(updatedRoomDoc.data()!);
               setState(() {
                 final index = rooms.indexWhere((l) => l.id == room.id);
