@@ -11,4 +11,13 @@ enum PetType {
   final String description;
 
   const PetType(this.description);
+
+  // Convertir PetType a un mapa para Firestore
+  String toMap() => name;
+
+  // Crear un PetType desde un mapa de Firestore
+  static PetType fromMap(String value) => PetType.values.firstWhere(
+    (e) => e.name == value,
+    orElse: () => PetType.leon, // Valor por defecto
+  );
 }

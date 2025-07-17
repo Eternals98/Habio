@@ -1,3 +1,6 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
@@ -9,6 +12,7 @@ class RoomService {
     required BuildContext context,
     required List<Room> rooms,
     required Function setState,
+    required String owner,
     required Function(int) scrollToSelected,
   }) async {
     final String? nameRoom = await showDialog<String>(
@@ -43,25 +47,41 @@ class RoomService {
     );
 
     if (nameRoom != null && nameRoom.isNotEmpty) {
-      setState(() {
+      try {
         final newRoom = Room(
           id: UniqueKey().toString(),
           name: nameRoom,
-          owner: UserModel(uid: "11w", email: "leeank"),
+          owner: owner,
           createdAt: DateTime.now(),
           shared: false,
         );
-        if (kDebugMode) {
-          print(newRoom.toString());
-        }
-        rooms.add(newRoom);
-        final selectedIndex = rooms.length - 1;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (context.mounted) {
-            scrollToSelected(selectedIndex);
+
+        // Guardar el nuevo Room en Firestore
+        await FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(newRoom.id)
+            .set(newRoom.toMap());
+
+        // Actualizar la lista local de rooms
+        setState(() {
+          rooms.add(newRoom);
+          if (kDebugMode) {
+            print(newRoom.toString());
           }
+          final selectedIndex = rooms.length - 1;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              scrollToSelected(selectedIndex);
+            }
+          });
         });
-      });
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error al crear el room: $e')));
+        }
+      }
     }
   }
 
@@ -118,7 +138,7 @@ class RoomService {
             members: room.members,
             owner: room.owner,
             createdAt: room.createdAt,
-            shared: room.shared, // Preserve existing createdAt
+            shared: room.shared,
           );
         }
         if (kDebugMode) {
@@ -182,34 +202,72 @@ class RoomService {
     );
 
     if (email != null && email.isNotEmpty) {
-      setState(() {
-        final index = rooms.indexWhere((l) => l.id == room.id);
-        if (index != -1) {
-          final newMember = UserModel(
-            uid: UniqueKey().toString(),
-            email: email,
-          );
-          final updatedMembers = List<UserModel>.from(room.members)
-            ..add(newMember);
-          rooms[index] = Room(
-            id: room.id,
-            name: room.name,
-            pets: room.pets,
-            members: updatedMembers,
-            owner: room.owner,
-            createdAt: room.createdAt,
-            shared: true, // Set shared to true when adding a member
-          );
+      try {
+        // Buscar el usuario en Firestore
+        final querySnapshot =
+            await FirebaseFirestore.instance
+                .collection('users')
+                .where('email', isEqualTo: email)
+                .get();
+
+        if (querySnapshot.docs.isNotEmpty) {
+          final doc = querySnapshot.docs.first;
+          final newMember = UserModel.fromMap(doc.data());
           if (kDebugMode) {
-            print(rooms[index].toString());
+            print(newMember.uid);
           }
+
+          // Actualizar la lista local de rooms
+          setState(() {
+            final index = rooms.indexWhere((l) => l.id == room.id);
+            if (index != -1) {
+              final updatedMembers = List<String>.from(room.members)
+                ..add(newMember.uid); // Agregar el uid del nuevo miembro
+              rooms[index] = Room(
+                id: room.id,
+                name: room.name,
+                pets: room.pets,
+                members: updatedMembers,
+                owner: room.owner,
+                createdAt: room.createdAt,
+                shared: true,
+              );
+              if (kDebugMode) {
+                print(rooms[index].toString());
+              }
+            }
+          });
+
+          // Actualizar el Room en Firestore
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(room.id)
+              .update({
+                'members': FieldValue.arrayUnion([
+                  newMember.uid,
+                ]), // Agregar el uid a members
+                'shared': true,
+              });
+        } else if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Usuario no encontrado')),
+          );
         }
-      });
+      } catch (e) {
+        if (kDebugMode) {
+          print('Error al agregar miembro: $e');
+        }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al agregar miembro: $e')),
+          );
+        }
+      }
     }
   }
 
   // Eliminar un lugar
-  void deleteRoom({
+  Future<void> deleteRoom({
     required BuildContext context,
     required Room room,
     required List<Room> rooms,
@@ -240,22 +298,37 @@ class RoomService {
     );
 
     if (confirm == true) {
-      setState(() {
-        rooms.removeWhere((l) => l.id == room.id);
-        int newIndex = selectedIndex;
-        if (selectedIndex >= rooms.length && rooms.isNotEmpty) {
-          newIndex = rooms.length - 1;
-        } else if (rooms.isEmpty) {
-          newIndex = -1;
+      try {
+        // Eliminar el documento de Firestore
+        await FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(room.id)
+            .delete();
+
+        // Actualizar la lista de rooms
+        setState(() {
+          rooms.removeWhere((l) => l.id == room.id);
+          int newIndex = selectedIndex;
+          if (selectedIndex >= rooms.length && rooms.isNotEmpty) {
+            newIndex = rooms.length - 1;
+          } else if (rooms.isEmpty) {
+            newIndex = -1;
+          }
+          if (rooms.isNotEmpty && context.mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (context.mounted) {
+                scrollToSelected(newIndex);
+              }
+            });
+          }
+        });
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error al eliminar el room: $e')),
+          );
         }
-        if (rooms.isNotEmpty && context.mounted) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (context.mounted) {
-              scrollToSelected(newIndex);
-            }
-          });
-        }
-      });
+      }
     }
   }
 }

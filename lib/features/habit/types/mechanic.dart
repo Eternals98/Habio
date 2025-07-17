@@ -9,4 +9,13 @@ enum Mechanic {
   final String name;
 
   const Mechanic(this.name, this.description);
+
+  // Convertir Mechanic a un mapa para Firestore
+  String toMap() => name;
+
+  // Crear un Mechanic desde un mapa de Firestore
+  static Mechanic fromMap(String value) => Mechanic.values.firstWhere(
+    (e) => e.name == value,
+    orElse: () => Mechanic.dance, // Valor por defecto
+  );
 }
