@@ -244,7 +244,7 @@ class RoomService {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('El usuario ya está en la room'),
+                      content: Text('El usuario ya es miembro de este lugar'),
                     ),
                   );
                 }
