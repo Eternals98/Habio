@@ -1,12 +1,11 @@
 import 'package:per_habit/features/habit/models/habit_model.dart';
-import 'package:per_habit/features/auth/models/user_model.dart';
 
 class Room {
   final String id;
   String name;
   List<PetHabit> pets;
-  List<UserModel> members;
-  UserModel owner;
+  List<String> members;
+  String owner;
   final DateTime createdAt;
   bool shared;
 
