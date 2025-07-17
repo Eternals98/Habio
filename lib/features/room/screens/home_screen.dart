@@ -107,7 +107,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _addRoom() {
     _roomService.addRoom(
       context: context,
-      userId: user?.uid ?? '',
       rooms: _rooms,
       setState: setState,
       owner: user!.uid,
