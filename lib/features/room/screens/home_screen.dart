@@ -162,7 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              "Hola ${user?.email ?? 'usuario'} 👋",
+              "Hola ${user?.displayName ?? 'usuario'} 👋",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
@@ -252,12 +252,17 @@ class _HomeScreenState extends State<HomeScreen> {
               if (value == 'logout') {
                 await FirebaseAuth.instance.signOut();
                 context.go('/login');
+              } else if (value == 'profile') {
+                context.push('/profile');
               }
-              // Aquí podrías agregar más opciones de menú
             },
             itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem<String>(
+              return const [
+                PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Text('Mi Perfil'),
+                ),
+                PopupMenuItem<String>(
                   value: 'logout',
                   child: Text('Cerrar Sesión'),
                 ),

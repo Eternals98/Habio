@@ -7,6 +7,7 @@ import 'package:per_habit/features/splash/splash_screen.dart';
 import 'package:per_habit/features/auth/screens/login_screen.dart';
 import 'package:per_habit/features/auth/screens/register_screen.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
+import 'package:per_habit/features/auth/screens/profile_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -41,7 +42,16 @@ class AppRouter {
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      GoRoute(path: '/home',name: 'home', builder: (context, state) => const HomeScreen()),
+      GoRoute(
+        path: '/home',
+        name: 'home',
+        builder: (context, state) => const HomeScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const UserProfileScreen(),
+      ),
     ],
   );
 }
