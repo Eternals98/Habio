@@ -2,9 +2,9 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:per_habit/features/auth/services/auth_service.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
-import 'package:per_habit/core/routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,9 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (result != null) {
         if (_isLogin) {
-          Navigator.of(
-            context,
-          ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+          context.goNamed('home');
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

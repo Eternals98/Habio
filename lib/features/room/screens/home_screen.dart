@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/services/room_service.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
-import 'package:per_habit/core/routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 import 'package:per_habit/features/room/screens/room_detail.dart';
 import 'package:per_habit/core/utils/sizes.dart';
 import 'package:per_habit/features/room/widgets/room_card.dart';
@@ -252,9 +252,7 @@ class _HomeScreenState extends State<HomeScreen> {
             onSelected: (value) async {
               if (value == 'logout') {
                 await FirebaseAuth.instance.signOut();
-                Navigator.of(
-                  context,
-                ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+                context.go('/login');
               }
               // Aquí podrías agregar más opciones de menú
             },

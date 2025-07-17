@@ -1,6 +1,7 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../core/routes/app_routes.dart';
+import 'package:go_router/go_router.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -22,9 +23,9 @@ class _SplashScreenState extends State<SplashScreen> {
     ); // Mostrar splash un momento
 
     if (FirebaseAuth.instance.currentUser != null) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      context.go('/home');
     } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      context.go('/login');
     }
   }
 
