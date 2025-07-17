@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/services/habit_service.dart';
+import 'package:per_habit/features/room/screens/home_screen.dart';
 import 'package:per_habit/features/room/services/room_service.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
@@ -39,8 +40,9 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     _petHabitService.addHabit(
       context: context,
       petHabits: _petHabits,
-      room: widget.room,
+      room: widget.room.id,
       setState: setState,
+      user: widget.room.owner,
     );
   }
 
@@ -103,16 +105,33 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
-  void _deleteRoom() {
-    _roomService.deleteRoom(
-      context: context,
-      room: widget.room,
-      rooms: widget.rooms,
-      setState: widget.setState,
-      selectedIndex: widget.selectedIndex,
-      scrollToSelected: widget.scrollToSelected,
-    );
-    Navigator.of(context).pop();
+  void _deleteRoom() async {
+    try {
+      // Llamar al servicio para eliminar el room
+      await _roomService.deleteRoom(
+        context: context,
+        room: widget.room,
+        rooms: widget.rooms,
+        setState: widget.setState,
+        selectedIndex: widget.selectedIndex,
+        scrollToSelected: widget.scrollToSelected,
+      );
+      // Retrasar la navegación hasta que el frame esté completo
+      if (context.mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (Route<dynamic> route) => false,
+          );
+        });
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar el room: $e')),
+        );
+      }
+    }
   }
 
   void _inviteMember() {

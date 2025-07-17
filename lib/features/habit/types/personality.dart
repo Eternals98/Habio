@@ -15,4 +15,13 @@ enum Personality {
   final String name;
 
   const Personality(this.name, this.description);
+
+  // Convertir Personality a un mapa para Firestore
+  String toMap() => name;
+
+  // Crear un Personality desde un mapa de Firestore
+  static Personality fromMap(String value) => Personality.values.firstWhere(
+    (e) => e.name == value,
+    orElse: () => Personality.brave, // Valor por defecto
+  );
 }
