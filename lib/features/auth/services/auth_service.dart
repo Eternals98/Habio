@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final _uuid = Uuid();
 
   /// Registro con email y contraseña
   Future<UserCredential> registerWithEmail(
@@ -18,11 +21,12 @@ class AuthService {
       // Crear documento de usuario en Firestore
       final user = userCredential.user;
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        final customUid = _uuid.v4();
+        await _db.collection('users').doc(user.uid).set({
+          'uid': user.uid, // uid de Firebase Auth
+          'customId': customUid, // tu propio uuid
           'email': email,
           'createdAt': FieldValue.serverTimestamp(),
-          'roomsOwned': [],
-          'roomsJoined': [],
         });
       }
 

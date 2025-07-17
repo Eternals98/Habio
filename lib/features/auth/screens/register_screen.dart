@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/auth/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -29,7 +30,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _loading = false);
 
-    if (user != null) {
+    if (user is User) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Registro exitoso. Ahora inicia sesión.")),
       );
