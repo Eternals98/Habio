@@ -1,10 +1,9 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
-  final Uuid _uuid = const Uuid();
 
   /// Sube una imagen al path especificado y devuelve la URL pública de descarga.
   Future<String> uploadHabitImage({
@@ -14,8 +13,9 @@ class StorageService {
     required File imageFile,
   }) async {
     try {
-      final String fileName = 'habit_${_uuid.v4()}.jpg';
-      final String storagePath = 'users/$userId/rooms/$roomId/habits/$habitId/$fileName';
+      final String fileName = 'habit_${UniqueKey().toString()}.jpg';
+      final String storagePath =
+          'users/$userId/rooms/$roomId/habits/$habitId/$fileName';
 
       final ref = _storage.ref().child(storagePath);
       final uploadTask = await ref.putFile(imageFile);

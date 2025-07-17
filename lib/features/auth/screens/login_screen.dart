@@ -31,14 +31,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     try {
-      UserCredential? result;
+      UserCredential? user;
       if (_isLogin) {
-        result = await AuthService().signInWithEmail(email, password);
+        user = await AuthService().signInWithEmail(email, password);
       } else {
-        result = await AuthService().registerWithEmail(email, password);
+        user = await AuthService().registerWithEmail(email, password);
       }
 
-      if (result != null) {
+      if (user is User) {
         if (_isLogin) {
           context.goNamed('home');
         } else {
