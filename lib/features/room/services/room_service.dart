@@ -212,7 +212,7 @@ class RoomService {
 
         if (querySnapshot.docs.isNotEmpty) {
           final doc = querySnapshot.docs.first;
-          final newMember = UserModel.fromMap(doc.data());
+          final newMember = UserModel.fromMap(doc.id, doc.data());
           if (kDebugMode) {
             print(newMember.uid);
           }

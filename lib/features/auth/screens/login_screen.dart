@@ -56,8 +56,9 @@ class _LoginScreenState extends State<LoginScreen> {
       String message = 'Error inesperado';
       if (e.code == 'user-not-found') message = 'Usuario no encontrado';
       if (e.code == 'wrong-password') message = 'Contraseña incorrecta';
-      if (e.code == 'email-already-in-use')
+      if (e.code == 'email-already-in-use') {
         message = 'Este correo ya está registrado';
+      }
       if (e.code == 'invalid-email') message = 'Correo no válido';
       if (e.code == 'weak-password') message = 'Contraseña demasiado débil';
 
