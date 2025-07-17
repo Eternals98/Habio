@@ -329,6 +329,13 @@ class RoomService {
                   'Recargando RoomDetailsScreen con Room actualizado: $updatedRoom',
                 );
               }
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'El usuario ${newMember.displayName} es el nuevo miembro de ${updatedRoom.name}',
+                  ),
+                ),
+              );
               return updatedRoom; // Retornar el Room actualizado
             }
           } else {

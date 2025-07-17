@@ -21,7 +21,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<Room> _rooms = [];
   int _selectedIndex = -1;
-  final ScrollController _scrollController = ScrollController();
   final RoomService _roomService = RoomService();
   final user = FirebaseAuth.instance.currentUser;
 
@@ -85,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
           }
           if (_rooms.isNotEmpty && _selectedIndex == -1) {
             _selectedIndex = 0;
-            _scrollToSelected(0);
           }
         });
       }
@@ -119,42 +117,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _scrollToSelected(int index) {
-    if (!_scrollController.hasClients || index < 0 || index >= _rooms.length) {
-      return;
-    }
-
-    final sizes = _calculateSizes(MediaQuery.of(context).size.width);
-    final itemWidthWithMargin =
-        sizes.containerWidth + (sizes.horizontalMargin * 2);
-
-    double targetOffset =
-        (index * itemWidthWithMargin) +
-        (itemWidthWithMargin / 2) -
-        (MediaQuery.of(context).size.width / 2) +
-        sizes.padding;
-
-    targetOffset = targetOffset.clamp(
-      _scrollController.position.minScrollExtent,
-      _scrollController.position.maxScrollExtent,
-    );
-
-    _scrollController.animateTo(
-      targetOffset,
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeInOut,
-    );
-  }
-
   void _selectRoom(int index) {
-    if (_selectedIndex == index) return;
+    if (_rooms.isEmpty) return;
     setState(() {
-      _selectedIndex = index;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scrollToSelected(index);
-      }
+      _selectedIndex = index.clamp(0, _rooms.length);
     });
   }
 
@@ -168,7 +134,7 @@ class _HomeScreenState extends State<HomeScreen> {
               rooms: _rooms,
               setState: setState,
               selectedIndex: _selectedIndex,
-              scrollToSelected: _scrollToSelected,
+              scrollToSelected: _selectRoom,
             ),
       ),
     );
@@ -195,7 +161,6 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedIndex = index;
         });
-        _scrollToSelected(index);
       },
     );
   }
@@ -207,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
       rooms: _rooms,
       setState: setState,
       selectedIndex: _selectedIndex,
-      scrollToSelected: _scrollToSelected,
+      scrollToSelected: _selectRoom,
     );
   }
 
@@ -222,15 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
         setState(() {
           _selectedIndex = index;
         });
-        _scrollToSelected(index);
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -268,25 +226,57 @@ class _HomeScreenState extends State<HomeScreen> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: sizes.containerHeight + 20,
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              trackVisibility: true,
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: EdgeInsets.symmetric(horizontal: sizes.padding),
-                scrollDirection: Axis.horizontal,
-                itemCount: _rooms.length + 1,
-                itemBuilder: (context, index) {
-                  if (index == _rooms.length) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: sizes.horizontalMargin,
-                        vertical: 10,
+          Expanded(
+            child: Center(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_left),
+                    onPressed:
+                        _selectedIndex > 0
+                            ? () => _selectRoom(_selectedIndex - 1)
+                            : null,
+                    tooltip: 'Anterior',
+                  ),
+                  SizedBox(width: sizes.horizontalMargin),
+                  // Left Card
+                  _selectedIndex > 0
+                      ? RoomCard(
+                        room: _rooms[_selectedIndex - 1],
+                        width: sizes.containerWidth,
+                        height: sizes.containerHeight,
+                        margin: sizes.horizontalMargin,
+                        isSelected: false,
+                        onTap: () => _selectRoom(_selectedIndex - 1),
+                        onAbrir:
+                            () => _navigateToRoomDetails(
+                              _rooms[_selectedIndex - 1],
+                            ),
+                        onEdit: () => _updateRoom(_rooms[_selectedIndex - 1]),
+                        onDelete: () => _deleteRoom(_rooms[_selectedIndex - 1]),
+                      )
+                      : SizedBox(
+                        width: sizes.containerWidth,
+                        height: sizes.containerHeight,
                       ),
-                      child: InkWell(
+                  SizedBox(width: sizes.horizontalMargin),
+                  // Center Card
+                  _selectedIndex < _rooms.length
+                      ? RoomCard(
+                        room: _rooms[_selectedIndex],
+                        width: sizes.containerWidth,
+                        height: sizes.containerHeight,
+                        margin: sizes.horizontalMargin,
+                        isSelected: true,
+                        onTap: () => _selectRoom(_selectedIndex),
+                        onAbrir:
+                            () =>
+                                _navigateToRoomDetails(_rooms[_selectedIndex]),
+                        onEdit: () => _updateRoom(_rooms[_selectedIndex]),
+                        onDelete: () => _deleteRoom(_rooms[_selectedIndex]),
+                      )
+                      : InkWell(
                         onTap: _addRoom,
                         child: Container(
                           width: sizes.containerWidth * 0.6,
@@ -297,22 +287,49 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: const Icon(Icons.add_rounded),
                         ),
                       ),
-                    );
-                  }
-
-                  final room = _rooms[index];
-                  return RoomCard(
-                    room: room,
-                    width: sizes.containerWidth,
-                    height: sizes.containerHeight,
-                    margin: sizes.horizontalMargin,
-                    isSelected: _selectedIndex == index,
-                    onTap: () => _selectRoom(index),
-                    onAbrir: () => _navigateToRoomDetails(room),
-                    onEdit: () => _updateRoom(room),
-                    onDelete: () => _deleteRoom(room),
-                  );
-                },
+                  SizedBox(width: sizes.horizontalMargin),
+                  // Right Card
+                  _selectedIndex < _rooms.length - 1
+                      ? RoomCard(
+                        room: _rooms[_selectedIndex + 1],
+                        width: sizes.containerWidth,
+                        height: sizes.containerHeight,
+                        margin: sizes.horizontalMargin,
+                        isSelected: false,
+                        onTap: () => _selectRoom(_selectedIndex + 1),
+                        onAbrir:
+                            () => _navigateToRoomDetails(
+                              _rooms[_selectedIndex + 1],
+                            ),
+                        onEdit: () => _updateRoom(_rooms[_selectedIndex + 1]),
+                        onDelete: () => _deleteRoom(_rooms[_selectedIndex + 1]),
+                      )
+                      : _selectedIndex == _rooms.length
+                      ? SizedBox(
+                        width: sizes.containerWidth * 0.6,
+                        height: sizes.containerHeight,
+                      )
+                      : InkWell(
+                        onTap: _addRoom,
+                        child: Container(
+                          width: sizes.containerWidth * 0.6,
+                          height: sizes.containerHeight,
+                          decoration: BoxDecoration(
+                            border: Border.all(width: 2),
+                          ),
+                          child: const Icon(Icons.add_rounded),
+                        ),
+                      ),
+                  SizedBox(width: sizes.horizontalMargin),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_right),
+                    onPressed:
+                        _selectedIndex < _rooms.length
+                            ? () => _selectRoom(_selectedIndex + 1)
+                            : null,
+                    tooltip: 'Siguiente',
+                  ),
+                ],
               ),
             ),
           ),
