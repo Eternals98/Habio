@@ -1,6 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/services/room_service.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
@@ -30,6 +32,74 @@ class _HomeScreenState extends State<HomeScreen> {
   static const _mobileMarginRatio = 0.02;
   static const _minContainerWidth = 150.0;
   static const _maxContainerWidth = 250.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRooms();
+  }
+
+  Future<void> _loadRooms() async {
+    if (user == null) return;
+    try {
+      if (mounted) {
+        setState(() {
+          _rooms.clear();
+        });
+      }
+      final querySnapshot =
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .where('owner', isEqualTo: user!.uid)
+              .get();
+      final memberQuerySnapshot =
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .where('members', arrayContains: user!.uid)
+              .get();
+
+      final allDocs = {...querySnapshot.docs, ...memberQuerySnapshot.docs};
+      final rooms = <Room>[];
+      for (var doc in allDocs) {
+        try {
+          final room = Room.fromMap(doc.data());
+          if (room.id.isNotEmpty && room.owner.isNotEmpty) {
+            rooms.add(room);
+          } else {
+            if (kDebugMode) {
+              print('Documento inválido, ID: ${doc.id}, datos: ${doc.data()}');
+            }
+          }
+        } catch (e) {
+          if (kDebugMode) {
+            print('Error al procesar documento ${doc.id}: $e');
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _rooms.addAll(rooms);
+          if (kDebugMode) {
+            print('Lugares cargados desde Firestore: $_rooms');
+          }
+          if (_rooms.isNotEmpty && _selectedIndex == -1) {
+            _selectedIndex = 0;
+            _scrollToSelected(0);
+          }
+        });
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error al cargar lugares: $e');
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al cargar lugares: $e')));
+      }
+    }
+  }
 
   Sizes _calculateSizes(double screenWidth) {
     final isDesktop = screenWidth > _desktopBreakpoint;
@@ -88,8 +158,8 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  void _navigateToRoomDetails(Room room) {
-    Navigator.push(
+  void _navigateToRoomDetails(Room room) async {
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder:
@@ -102,6 +172,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
       ),
     );
+    if (result is Room && mounted) {
+      setState(() {
+        final index = _rooms.indexWhere((r) => r.id == result.id);
+        if (index != -1) {
+          _rooms[index] = result;
+          if (kDebugMode) {
+            print('Room actualizado en HomeScreen: $result');
+          }
+        }
+      });
+    }
   }
 
   void _addRoom() {
@@ -111,7 +192,9 @@ class _HomeScreenState extends State<HomeScreen> {
       setState: setState,
       owner: user!.uid,
       scrollToSelected: (index) {
-        _selectedIndex = index;
+        setState(() {
+          _selectedIndex = index;
+        });
         _scrollToSelected(index);
       },
     );

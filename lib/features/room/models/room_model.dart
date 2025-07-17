@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 
 class Room {
@@ -35,19 +36,26 @@ class Room {
 
   // Crear un Room desde un mapa de Firestore
   factory Room.fromMap(Map<String, dynamic> map) {
-    return Room(
-      id: map['id'] ?? '',
-      name: map['name'] ?? '',
-      pets:
-          (map['pets'] as List<dynamic>?)?.map((pet) {
-            return PetHabit.fromMap(pet as Map<String, dynamic>);
-          }).toList() ??
-          [],
-      members: (map['members'] as List<dynamic>?)?.cast<String>() ?? [],
-      owner: map['owner'] ?? '',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      shared: map['shared'] ?? false,
-    );
+    try {
+      return Room(
+        id: map['id'] as String? ?? '',
+        name: map['name'] as String? ?? 'Sin nombre',
+        pets:
+            (map['pets'] as List<dynamic>?)?.map((pet) {
+              return PetHabit.fromMap(pet as Map<String, dynamic>);
+            }).toList() ??
+            [],
+        members: List<String>.from(map['members'] ?? []),
+        owner: map['owner'] as String? ?? '',
+        createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        shared: map['shared'] as bool? ?? false,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error en Room.fromMap: $e, datos: $map');
+      }
+      rethrow;
+    }
   }
 
   @override
