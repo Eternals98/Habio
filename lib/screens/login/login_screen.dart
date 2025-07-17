@@ -17,12 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final FocusNode _emailFocus = FocusNode(); // Foco para el campo de email
-  final FocusNode _passwordFocus =
-      FocusNode(); // Foco para el campo de contraseña
-  bool _isLogin = true; // true = login, false = register
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  bool _isLogin = true;
 
-  /// Método para normalizar el email: si no tiene @, le agrega @habio.com
   String normalizeEmail(String input) {
     if (input.contains('@')) {
       return input.trim();
@@ -31,7 +29,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Manejar login
   Future<void> _handleLogin() async {
     final email = normalizeEmail(_emailController.text);
     final password = _passwordController.text;
@@ -52,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  /// Manejar registro
   Future<void> _handleRegister() async {
     final email = normalizeEmail(_emailController.text);
     final password = _passwordController.text;
@@ -75,6 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleSubmit() {
+    _isLogin ? _handleLogin() : _handleRegister();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,11 +85,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Logo
               Image.asset('assets/images/logo.png', height: 120),
               const SizedBox(height: 24),
-
-              // Título
               Text(
                 _isLogin ? 'Bienvenido a Habio' : 'Crea tu cuenta',
                 style: const TextStyle(
@@ -99,67 +96,48 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-
-              // Formulario
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // Email
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Usuario o Email',
-                        prefixIcon: const Icon(Icons.person),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa tu email o usuario';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Contraseña
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        prefixIcon: const Icon(Icons.lock),
-                        filled: true,
-                        fillColor: Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Ingresa tu contraseña';
-                        }
-                        if (value.length < 6) return 'Mínimo 6 caracteres';
-                        return null;
-                      },
-                      onFieldSubmitted: (_) {
-                        if (_formKey.currentState!.validate()) {
-                          _isLogin ? _handleLogin() : _handleRegister();
-                        }
-                      },
-                    ),
-                  ],
+              TextField(
+                controller: _emailController,
+                focusNode: _emailFocus,
+                onSubmitted:
+                    (_) => FocusScope.of(context).requestFocus(_passwordFocus),
+                decoration: InputDecoration(
+                  labelText: 'Usuario o Email',
+                  prefixIcon: const Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _passwordController,
+                focusNode: _passwordFocus,
+                obscureText: true,
+                onFieldSubmitted:
+                    (_) => _isLogin ? _handleLogin() : _handleRegister(),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Ingresa tu contraseña';
+                  }
+                  if (value.length < 6) return 'Mínimo 6 caracteres';
+                  return null;
+                },
+                decoration: InputDecoration(
+                  labelText: 'Contraseña',
+                  prefixIcon: const Icon(Icons.lock),
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
               const SizedBox(height: 24),
-
-              // Botón principal
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -182,8 +160,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Botón para cambiar modo
               TextButton(
                 onPressed: () {
                   setState(() {
@@ -206,10 +182,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _emailController.dispose(); // Libera el controlador del email
-    _passwordController.dispose(); // Libera el controlador de la contraseña
-    _emailFocus.dispose(); // Libera el nodo de foco del email
-    _passwordFocus.dispose(); // Libera el nodo de foco de la contraseña
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
     super.dispose();
   }
 }
