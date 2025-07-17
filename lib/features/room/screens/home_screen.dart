@@ -2,12 +2,12 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:per_habit/data/lugar_service.dart';
-import 'package:per_habit/models/room_model.dart';
-import 'package:per_habit/routes/app_routes.dart';
-import 'package:per_habit/screens/room/room_detail.dart';
-import 'package:per_habit/utils/sizes.dart';
-import 'package:per_habit/widgets/room_card.dart';
+import 'package:per_habit/features/room/services/room_service.dart';
+import 'package:per_habit/features/room/models/room_model.dart';
+import 'package:per_habit/core/routes/app_routes.dart';
+import 'package:per_habit/features/room/screens/room_detail.dart';
+import 'package:per_habit/core/utils/sizes.dart';
+import 'package:per_habit/features/room/widgets/room_card.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

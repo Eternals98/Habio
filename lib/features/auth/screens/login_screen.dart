@@ -2,9 +2,9 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:per_habit/data/auth_service.dart';
-import 'package:per_habit/app_colors.dart';
-import 'package:per_habit/routes/app_routes.dart';
+import 'package:per_habit/features/auth/services/auth_service.dart';
+import 'package:per_habit/core/theme/app_colors.dart';
+import 'package:per_habit/core/routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

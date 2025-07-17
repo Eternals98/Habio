@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/data/habit_service.dart';
-import 'package:per_habit/data/lugar_service.dart';
-import 'package:per_habit/models/habit_model.dart';
-import 'package:per_habit/models/room_model.dart';
+import 'package:per_habit/features/habit/services/habit_service.dart';
+import 'package:per_habit/features/room/services/room_service.dart';
+import 'package:per_habit/features/habit/models/habit_model.dart';
+import 'package:per_habit/features/room/models/room_model.dart';
 
 class LugarDetalleScreen extends StatefulWidget {
   final Lugar lugar;

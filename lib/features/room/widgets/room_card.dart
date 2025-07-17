@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/models/room_model.dart';
+import 'package:per_habit/features/room/models/room_model.dart';
 
 class LugarCard extends StatelessWidget {
   final Lugar lugar;

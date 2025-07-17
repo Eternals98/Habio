@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/screens/home/home_screen.dart';
-import 'package:per_habit/screens/login/login_screen.dart';
-import 'package:per_habit/screens/splash/splash_screen.dart';
-import 'Package:per_habit/screens/register/register_screen.dart';
+import 'package:per_habit/features/room/screens/home_screen.dart';
+import 'package:per_habit/features/auth/screens/login_screen.dart';
+import 'package:per_habit/features/splash/splash_screen.dart';
+import '../../features/auth/screens/register_screen.dart';
 
 /// Archivo donde defines las rutas y pantallas asociadas.
 class AppRoutes {
