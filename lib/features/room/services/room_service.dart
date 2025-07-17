@@ -234,16 +234,23 @@ class RoomService {
           }
 
           // Verificar si el miembro ya está en la lista
-          if (room.members.contains(newMember.uid)) {
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('El usuario ya es miembro')),
-              );
+          for (final memberUid in room.members) {
+            if (memberUid == newMember.uid) {
+              if (kDebugMode) {
+                print('El usuario ${newMember.uid} ya está en members');
+                print('Context mounted: ${context.mounted}');
+              }
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('El usuario ya está en la room'),
+                    ),
+                  );
+                }
+              });
+              return;
             }
-            if (kDebugMode) {
-              print('El usuario ${newMember.uid} ya está en members');
-            }
-            return;
           }
 
           // Actualizar la lista local de rooms
