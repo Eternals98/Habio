@@ -1,5 +1,5 @@
-import 'package:per_habit/models/habit_model.dart';
-import 'package:per_habit/models/user_model.dart';
+import 'package:per_habit/features/habit/models/habit_model.dart';
+import 'package:per_habit/features/auth/models/user_model.dart';
 
 class Lugar {
   final String id;

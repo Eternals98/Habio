@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:per_habit/models/room_model.dart';
-import 'package:per_habit/models/user_model.dart';
+import 'package:per_habit/features/room/models/room_model.dart';
+import 'package:per_habit/features/auth/models/user_model.dart';
 
 class LugarService {
   // Crear un lugar

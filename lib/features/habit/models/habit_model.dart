@@ -3,11 +3,11 @@
 import 'dart:math' as math;
 import 'dart:ui';
 
-import 'package:per_habit/models/room_model.dart';
-import 'package:per_habit/models/user_model.dart';
-import 'package:per_habit/types/mechanic.dart';
-import 'package:per_habit/types/personality.dart';
-import 'package:per_habit/types/petType.dart';
+import 'package:per_habit/features/room/models/room_model.dart';
+import 'package:per_habit/features/auth/models/user_model.dart';
+import 'package:per_habit/features/habit/types/mechanic.dart';
+import 'package:per_habit/features/habit/types/personality.dart';
+import 'package:per_habit/features/habit/types/petType.dart';
 
 class MascotaHabito {
   final String id;
