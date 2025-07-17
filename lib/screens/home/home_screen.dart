@@ -21,6 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = -1;
   final ScrollController _scrollController = ScrollController();
   final LugarService _lugarService = LugarService();
+  final user = FirebaseAuth.instance.currentUser;
 
   static const _desktopBreakpoint = 800.0;
   static const _desktopWidthRatio = 0.25;
@@ -161,6 +162,11 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Text(
+              "Hola ${user?.email ?? 'usuario'} 👋",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 20),
             const Text('¡Crea tu primer lugar para empezar!'),
             const SizedBox(height: 20),
             ElevatedButton.icon(
@@ -173,8 +179,13 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     } else {
       bodyContent = Column(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          const SizedBox(height: 10),
+          Text(
+            "Bienvenido, ${user?.displayName ?? user?.email ?? 'usuario'} 👋",
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
           SizedBox(
             height: sizes.containerHeight + 20,
             child: Scrollbar(
@@ -237,13 +248,24 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _addLugar,
               tooltip: 'Crear Lugar',
             ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              Navigator.pushReplacementNamed(context, AppRoutes.login);
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'logout') {
+                await FirebaseAuth.instance.signOut();
+                Navigator.of(
+                  context,
+                ).pushNamedAndRemoveUntil(AppRoutes.login, (route) => false);
+              }
+              // Aquí podrías agregar más opciones de menú
             },
-            tooltip: 'Cerrar Sesión',
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Text('Cerrar Sesión'),
+                ),
+              ];
+            },
           ),
         ],
       ),

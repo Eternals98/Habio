@@ -2,9 +2,9 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../data/auth_service.dart';
-import '../../app_colors.dart'; // Importamos los colores centralizados
-import '../home/home_screen.dart';
+import 'package:per_habit/data/auth_service.dart';
+import 'package:per_habit/app_colors.dart';
+import 'package:per_habit/routes/app_routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,64 +14,61 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   bool _isLogin = true;
+  bool _loading = false;
 
-  String normalizeEmail(String input) {
-    if (input.contains('@')) {
-      return input.trim();
-    } else {
-      return '${input.trim()}@habio.com';
-    }
-  }
+  Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  Future<void> _handleLogin() async {
-    final email = normalizeEmail(_emailController.text);
+    setState(() => _loading = true);
+
+    final email = _emailController.text;
     final password = _passwordController.text;
-    UserCredential? success = await AuthService().signInWithEmail(
-      email,
-      password,
-    );
 
-    if (success != null) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
-      );
-    } else {
+    try {
+      UserCredential? result;
+      if (_isLogin) {
+        result = await AuthService().signInWithEmail(email, password);
+      } else {
+        result = await AuthService().registerWithEmail(email, password);
+      }
+
+      if (result != null) {
+        if (_isLogin) {
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro exitoso, ahora inicia sesión.'),
+            ),
+          );
+          setState(() {
+            _isLogin = true;
+          });
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = 'Error inesperado';
+      if (e.code == 'user-not-found') message = 'Usuario no encontrado';
+      if (e.code == 'wrong-password') message = 'Contraseña incorrecta';
+      if (e.code == 'email-already-in-use')
+        message = 'Este correo ya está registrado';
+      if (e.code == 'invalid-email') message = 'Correo no válido';
+      if (e.code == 'weak-password') message = 'Contraseña demasiado débil';
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Error al iniciar sesión')));
+      ).showSnackBar(SnackBar(content: Text(message)));
+    } finally {
+      setState(() => _loading = false);
     }
-  }
-
-  Future<void> _handleRegister() async {
-    final email = normalizeEmail(_emailController.text);
-    final password = _passwordController.text;
-    UserCredential? success = await AuthService().registerWithEmail(
-      email,
-      password,
-    );
-
-    if (success != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Registro exitoso, ahora inicia sesión.')),
-      );
-      setState(() {
-        _isLogin = true;
-      });
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Error al registrarse')));
-    }
-  }
-
-  void _handleSubmit() {
-    _isLogin ? _handleLogin() : _handleRegister();
   }
 
   @override
@@ -81,94 +78,121 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset('assets/images/logo.png', height: 120),
-              const SizedBox(height: 24),
-              Text(
-                _isLogin ? 'Bienvenido a Habio' : 'Crea tu cuenta',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              TextField(
-                controller: _emailController,
-                focusNode: _emailFocus,
-                onSubmitted:
-                    (_) => FocusScope.of(context).requestFocus(_passwordFocus),
-                decoration: InputDecoration(
-                  labelText: 'Usuario o Email',
-                  prefixIcon: const Icon(Icons.person),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset('assets/images/logo.png', height: 120),
+                const SizedBox(height: 24),
+                Text(
+                  _isLogin ? 'Bienvenido a Habio' : 'Crea tu cuenta',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                focusNode: _passwordFocus,
-                obscureText: true,
-                onFieldSubmitted:
-                    (_) => _isLogin ? _handleLogin() : _handleRegister(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu contraseña';
-                  }
-                  if (value.length < 6) return 'Mínimo 6 caracteres';
-                  return null;
-                },
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  prefixIcon: const Icon(Icons.lock),
-                  filled: true,
-                  fillColor: Colors.white,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLogin ? _handleLogin : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
+                const SizedBox(height: 32),
+                TextFormField(
+                  controller: _emailController,
+                  focusNode: _emailFocus,
+                  onFieldSubmitted:
+                      (_) =>
+                          FocusScope.of(context).requestFocus(_passwordFocus),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingresa tu correo o usuario';
+                    }
+                    if (!value.contains('@') && !value.contains('.')) {
+                      return 'Correo inválido';
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Usuario o Email',
+                    prefixIcon: const Icon(Icons.person),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
                     ),
                   ),
-                  child: Text(
-                    _isLogin ? 'Iniciar sesión' : 'Registrarse',
-                    style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  focusNode: _passwordFocus,
+                  obscureText: true,
+                  onFieldSubmitted: (_) => _handleAuth(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ingresa tu contraseña';
+                    }
+                    if (value.length < 6) return 'Mínimo 6 caracteres';
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña',
+                    prefixIcon: const Icon(Icons.lock),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isLogin = !_isLogin;
-                  });
-                },
-                child: Text(
-                  _isLogin
-                      ? '¿No tienes cuenta? Regístrate'
-                      : '¿Ya tienes cuenta? Inicia sesión',
-                  style: const TextStyle(color: AppColors.primary),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _loading ? null : _handleAuth,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child:
+                        _loading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                                strokeWidth: 2,
+                              ),
+                            )
+                            : Text(
+                              _isLogin ? 'Iniciar sesión' : 'Registrarse',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed:
+                      _loading
+                          ? null
+                          : () {
+                            setState(() {
+                              _isLogin = !_isLogin;
+                            });
+                          },
+                  child: Text(
+                    _isLogin
+                        ? '¿No tienes cuenta? Regístrate'
+                        : '¿Ya tienes cuenta? Inicia sesión',
+                    style: const TextStyle(color: AppColors.primary),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
