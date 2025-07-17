@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/models/room.dart';
+import 'package:per_habit/models/room_model.dart';
 
 class LugarCard extends StatelessWidget {
   final Lugar lugar;
@@ -9,6 +9,8 @@ class LugarCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onAbrir;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const LugarCard({
     required this.lugar,
@@ -18,6 +20,8 @@ class LugarCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.onAbrir,
+    this.onEdit,
+    this.onDelete,
     super.key,
   });
 
@@ -45,7 +49,23 @@ class LugarCard extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             const Icon(Icons.category_rounded),
-            ElevatedButton(onPressed: onAbrir, child: const Text("Abrir")),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(onPressed: onAbrir, child: const Text("Abrir")),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: onEdit,
+                  tooltip: 'Editar',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20),
+                  onPressed: onDelete,
+                  tooltip: 'Eliminar',
+                ),
+              ],
+            ),
           ],
         ),
       ),

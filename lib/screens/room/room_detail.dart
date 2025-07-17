@@ -1,18 +1,24 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
-import 'package:per_habit/models/habit.dart';
-import 'package:per_habit/models/pet.dart';
-import 'package:per_habit/models/room.dart';
-import 'package:per_habit/models/user_model.dart';
-import 'package:per_habit/types/mechanic.dart';
-import 'package:per_habit/types/personality.dart';
-import 'package:per_habit/types/petType.dart';
+import 'package:per_habit/data/habit_service.dart';
+import 'package:per_habit/data/lugar_service.dart';
+import 'package:per_habit/models/habit_model.dart';
+import 'package:per_habit/models/room_model.dart';
 
 class LugarDetalleScreen extends StatefulWidget {
   final Lugar lugar;
+  final List<Lugar> lugares;
+  final Function setState;
+  final int selectedIndex;
+  final Function(int) scrollToSelected;
 
-  const LugarDetalleScreen({super.key, required this.lugar});
+  const LugarDetalleScreen({
+    super.key,
+    required this.lugar,
+    required this.lugares,
+    required this.setState,
+    required this.selectedIndex,
+    required this.scrollToSelected,
+  });
 
   @override
   State<LugarDetalleScreen> createState() => _LugarDetalleScreenState();
@@ -20,9 +26,8 @@ class LugarDetalleScreen extends StatefulWidget {
 
 class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
   late List<MascotaHabito> _mascotas;
-  Mechanic? _selectedMechanic;
-  Personality? _selectedPersonality;
-  PetType? _selectedPetType;
+  final LugarService _lugarService = LugarService();
+  final MascotaHabitoService _mascotaHabitoService = MascotaHabitoService();
 
   @override
   void initState() {
@@ -30,168 +35,40 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
     _mascotas = List.from(widget.lugar.mascotas);
   }
 
-  void _addHabito() async {
-    _selectedMechanic = null;
-    _selectedPersonality = null;
-    _selectedPetType = null;
-
-    final String? nombreHabito = await showDialog<String>(
+  void _addHabito() {
+    _mascotaHabitoService.addHabito(
       context: context,
-      builder: (BuildContext context) {
-        TextEditingController controller = TextEditingController();
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Crear Nuevo Hábito'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Nombre del hábito (Ej: Meditar)',
-                      ),
-                      autofocus: true,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButton<Mechanic>(
-                      hint: const Text('Selecciona Mecánica'),
-                      value: _selectedMechanic,
-                      isExpanded: true,
-                      items:
-                          Mechanic.values.map((Mechanic mechanic) {
-                            return DropdownMenuItem<Mechanic>(
-                              value: mechanic,
-                              child: Text(mechanic.name),
-                            );
-                          }).toList(),
-                      onChanged: (Mechanic? newValue) {
-                        setDialogState(() {
-                          _selectedMechanic = newValue;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButton<Personality>(
-                      hint: const Text('Selecciona Personalidad'),
-                      value: _selectedPersonality,
-                      isExpanded: true,
-                      items:
-                          Personality.values.map((Personality personality) {
-                            return DropdownMenuItem<Personality>(
-                              value: personality,
-                              child: Text(personality.name),
-                            );
-                          }).toList(),
-                      onChanged: (Personality? newValue) {
-                        setDialogState(() {
-                          _selectedPersonality = newValue;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButton<PetType>(
-                      hint: const Text('Selecciona Tipo de Mascota'),
-                      value: _selectedPetType,
-                      isExpanded: true,
-                      items:
-                          PetType.values.map((PetType petType) {
-                            return DropdownMenuItem<PetType>(
-                              value: petType,
-                              child: Text(petType.name),
-                            );
-                          }).toList(),
-                      onChanged: (PetType? newValue) {
-                        setDialogState(() {
-                          _selectedPetType = newValue;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancelar'),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-                ElevatedButton(
-                  child: const Text('Crear'),
-                  onPressed: () {
-                    if (controller.text.trim().isNotEmpty &&
-                        _selectedMechanic != null &&
-                        _selectedPersonality != null &&
-                        _selectedPetType != null) {
-                      Navigator.of(context).pop(controller.text.trim());
-                    }
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text('Crear Random'),
-                  onPressed: () {
-                    if (controller.text.trim().isNotEmpty) {
-                      Navigator.of(context).pop(controller.text.trim());
-                      setDialogState(() {
-                        _selectedMechanic =
-                            Mechanic.values[math.Random().nextInt(
-                              Mechanic.values.length,
-                            )];
-                        _selectedPersonality =
-                            Personality.values[math.Random().nextInt(
-                              Personality.values.length,
-                            )];
-                        _selectedPetType =
-                            PetType.values[math.Random().nextInt(
-                              PetType.values.length,
-                            )];
-                      });
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
+      mascotas: _mascotas,
+      lugar: widget.lugar,
+      setState: setState,
     );
-
-    if (nombreHabito != null && nombreHabito.isNotEmpty) {
-      setState(() {
-        final newPet = Pet(
-          id: math.Random().nextInt(1000000).toString(),
-          mechanic:
-              _selectedMechanic ??
-              Mechanic.values[math.Random().nextInt(Mechanic.values.length)],
-          personality:
-              _selectedPersonality ??
-              Personality.values[math.Random().nextInt(
-                Personality.values.length,
-              )],
-          petType:
-              _selectedPetType ??
-              PetType.values[math.Random().nextInt(PetType.values.length)],
-        );
-        final newHabito = MascotaHabito(
-          id: math.Random().nextInt(1000000).toString(),
-          nombre: nombreHabito,
-          pet: newPet,
-          userModel: UserModel(
-            uid: 'user_${math.Random().nextInt(1000)}',
-            email: '',
-          ),
-          room: widget.lugar,
-          position: const Offset(50, 50),
-        );
-        _mascotas.add(newHabito);
-      });
-    }
   }
 
   void _updatePosition(MascotaHabito habito, Offset newPosition) {
     setState(() {
       habito.position = newPosition;
+      widget.lugar.mascotas = _mascotas;
     });
+  }
+
+  void _editHabito(MascotaHabito habito) {
+    _mascotaHabitoService.updateHabito(
+      context: context,
+      habito: habito,
+      mascotas: _mascotas,
+      lugar: widget.lugar,
+      setState: setState,
+    );
+  }
+
+  void _deleteHabito(MascotaHabito habito) {
+    _mascotaHabitoService.deleteHabito(
+      context: context,
+      habito: habito,
+      mascotas: _mascotas,
+      lugar: widget.lugar,
+      setState: setState,
+    );
   }
 
   void _showHabitoDetails(MascotaHabito habito) {
@@ -201,7 +78,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
         return AlertDialog(
           title: Text(habito.nombre),
           content: Text(
-            '${habito.nombre} is a ${habito.pet.petType.description} with ${habito.pet.personality.description} who loves ${habito.pet.mechanic.description}',
+            '${habito.nombre} is a ${habito.petType.description} with ${habito.personality.description} who loves ${habito.mechanic.description}',
             textAlign: TextAlign.center,
           ),
           actions: [
@@ -215,10 +92,61 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
     );
   }
 
+  void _editLugar() {
+    _lugarService.updateLugar(
+      context: context,
+      lugar: widget.lugar,
+      lugares: widget.lugares,
+      setState: widget.setState,
+      selectedIndex: widget.selectedIndex,
+      scrollToSelected: widget.scrollToSelected,
+    );
+  }
+
+  void _deleteLugar() {
+    _lugarService.deleteLugar(
+      context: context,
+      lugar: widget.lugar,
+      lugares: widget.lugares,
+      setState: widget.setState,
+      selectedIndex: widget.selectedIndex,
+      scrollToSelected: widget.scrollToSelected,
+    );
+    Navigator.of(context).pop();
+  }
+
+  void _inviteMember() {
+    _lugarService.addMember(
+      context: context,
+      lugar: widget.lugar,
+      lugares: widget.lugares,
+      setState: widget.setState,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.lugar.nombre)),
+      appBar: AppBar(
+        title: Text(widget.lugar.nombre),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add),
+            onPressed: _inviteMember,
+            tooltip: 'Invitar Miembro',
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: _editLugar,
+            tooltip: 'Editar Lugar',
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _deleteLugar,
+            tooltip: 'Eliminar Lugar',
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           Center(
@@ -285,7 +213,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.pet.petType.name,
+                        habito.petType.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
@@ -293,7 +221,7 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.pet.personality.name,
+                        habito.personality.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
@@ -301,11 +229,27 @@ class _LugarDetalleScreenState extends State<LugarDetalleScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        habito.pet.mechanic.name,
+                        habito.mechanic.name,
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 16),
+                            onPressed: () => _editHabito(habito),
+                            tooltip: 'Editar Hábito',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete, size: 16),
+                            onPressed: () => _deleteHabito(habito),
+                            tooltip: 'Eliminar Hábito',
+                          ),
+                        ],
                       ),
                     ],
                   ),

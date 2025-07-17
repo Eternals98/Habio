@@ -1,12 +1,14 @@
-import 'package:flutter/material.dart';
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:per_habit/models/room.dart';
+import 'package:flutter/material.dart';
+import 'package:per_habit/data/lugar_service.dart';
+import 'package:per_habit/models/room_model.dart';
+import 'package:per_habit/routes/app_routes.dart';
 import 'package:per_habit/screens/room/room_detail.dart';
 import 'package:per_habit/utils/sizes.dart';
 import 'package:per_habit/widgets/room_card.dart';
-import '../../routes/app_routes.dart'; // Ensure this is correct for your routes
 
-// --- HomeScreen ---
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -18,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Lugar> _lugares = [];
   int _selectedIndex = -1;
   final ScrollController _scrollController = ScrollController();
+  final LugarService _lugarService = LugarService();
 
   static const _desktopBreakpoint = 800.0;
   static const _desktopWidthRatio = 0.25;
@@ -43,73 +46,6 @@ class _HomeScreenState extends State<HomeScreen> {
       horizontalMargin: horizontalMargin,
       padding: listViewPadding,
     );
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _addLugar() async {
-    final String? nombreLugar = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        TextEditingController controller = TextEditingController();
-        return AlertDialog(
-          title: const Text('Crear Nuevo Lugar'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              hintText: "Nombre del lugar (Ej: Estudio)",
-            ),
-            autofocus: true,
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Cancelar'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            ElevatedButton(
-              child: const Text('Crear'),
-              onPressed: () {
-                if (controller.text.trim().isNotEmpty) {
-                  Navigator.of(context).pop(controller.text.trim());
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-
-    if (nombreLugar != null && nombreLugar.isNotEmpty) {
-      setState(() {
-        final nuevoLugar = Lugar(
-          id: UniqueKey().toString(),
-          nombre: nombreLugar,
-        );
-        _lugares.add(nuevoLugar);
-        _selectedIndex = _lugares.length - 1;
-      });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _scrollToSelected(_selectedIndex);
-        }
-      });
-    }
-  }
-
-  void _selectLugar(int index) {
-    if (_selectedIndex == index) return;
-    setState(() {
-      _selectedIndex = index;
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scrollToSelected(index);
-      }
-    });
   }
 
   void _scrollToSelected(int index) {
@@ -141,11 +77,77 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _selectLugar(int index) {
+    if (_selectedIndex == index) return;
+    setState(() {
+      _selectedIndex = index;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scrollToSelected(index);
+      }
+    });
+  }
+
   void _navigateToLugarDetalle(Lugar lugar) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => LugarDetalleScreen(lugar: lugar)),
+      MaterialPageRoute(
+        builder:
+            (context) => LugarDetalleScreen(
+              lugar: lugar,
+              lugares: _lugares,
+              setState: setState,
+              selectedIndex: _selectedIndex,
+              scrollToSelected: _scrollToSelected,
+            ),
+      ),
     );
+  }
+
+  void _addLugar() {
+    _lugarService.addLugar(
+      context: context,
+      lugares: _lugares,
+      setState: setState,
+      scrollToSelected: (index) {
+        _selectedIndex = index;
+        _scrollToSelected(index);
+      },
+    );
+  }
+
+  void _updateLugar(Lugar lugar) {
+    _lugarService.updateLugar(
+      context: context,
+      lugar: lugar,
+      lugares: _lugares,
+      setState: setState,
+      selectedIndex: _selectedIndex,
+      scrollToSelected: _scrollToSelected,
+    );
+  }
+
+  void _deleteLugar(Lugar lugar) {
+    _lugarService.deleteLugar(
+      context: context,
+      lugar: lugar,
+      lugares: _lugares,
+      setState: setState,
+      selectedIndex: _selectedIndex,
+      scrollToSelected: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+        _scrollToSelected(index);
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -214,6 +216,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     isSelected: _selectedIndex == index,
                     onTap: () => _selectLugar(index),
                     onAbrir: () => _navigateToLugarDetalle(lugar),
+                    onEdit: () => _updateLugar(lugar),
+                    onDelete: () => _deleteLugar(lugar),
                   );
                 },
               ),
@@ -231,6 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
               onPressed: _addLugar,
+              tooltip: 'Crear Lugar',
             ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -238,6 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await FirebaseAuth.instance.signOut();
               Navigator.pushReplacementNamed(context, AppRoutes.login);
             },
+            tooltip: 'Cerrar Sesión',
           ),
         ],
       ),
