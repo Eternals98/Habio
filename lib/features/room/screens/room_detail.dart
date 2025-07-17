@@ -1,3 +1,4 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/services/habit_service.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
@@ -73,20 +74,34 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     );
   }
 
-  void _showHabitoDetails(PetHabit habit) {
+  void _showHabitDetails(PetHabit habit) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text(habit.name),
           content: Text(
-            '${habit.name} is a ${habit.petType.description} with ${habit.personality.description} who loves ${habit.mechanic.description}',
+            '${habit.name} es un(a) ${habit.petType.description} con personalidad ${habit.personality.description}, que ama ${habit.mechanic.description}.\n\nVida: ${habit.life}\nRacha: ${habit.streak}\nNivel: ${habit.level}',
             textAlign: TextAlign.center,
           ),
           actions: [
             TextButton(
               child: const Text('Cerrar'),
               onPressed: () => Navigator.of(context).pop(),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.check),
+              label: const Text('Marcar como hecho'),
+              onPressed: () async {
+                final habitService = PetHabitService();
+                await habitService.marcarHabitComoHecho(
+                  context: context,
+                  habit: habit,
+                  room: widget.room,
+                  setState: setState,
+                );
+                Navigator.of(context).pop();
+              },
             ),
           ],
         );
@@ -194,7 +209,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
               left: habit.position.dx,
               top: habit.position.dy,
               child: GestureDetector(
-                onTap: () => _showHabitoDetails(habit),
+                onTap: () => _showHabitDetails(habit),
                 onPanUpdate: (details) {
                   _updatePosition(
                     habit,

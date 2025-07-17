@@ -1,7 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
+import 'package:per_habit/features/habit/types/status.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
 import 'package:per_habit/features/habit/types/mechanic.dart';
 import 'package:per_habit/features/habit/types/personality.dart';
@@ -127,77 +128,37 @@ class PetHabitService {
       },
     );
 
-    if (nameHabit != null && nameHabit.isNotEmpty) {
-      try {
-        // Crear el nuevo PetHabit
-        final newHabit = PetHabit(
-          id: UniqueKey().toString(),
-          name: nameHabit,
-          userModel: user,
-          room: room,
-          mechanic:
-              selectedMechanic ??
-              PetHabit.random(
-                UniqueKey().toString(),
-                nameHabit,
-                user,
-                room,
-              ).mechanic,
-          personality:
-              selectedPersonality ??
-              PetHabit.random(
-                UniqueKey().toString(),
-                nameHabit,
-                user,
-                room,
-              ).personality,
-          petType:
-              selectedPetType ??
-              PetHabit.random(
-                UniqueKey().toString(),
-                nameHabit,
-                user,
-                room,
-              ).petType,
-          position: const Offset(50, 50),
-          createdAt: DateTime.now(),
-        );
+    if (nameHabit != null) {
+      final String habitId =
+          FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(room)
+              .collection('habits')
+              .doc()
+              .id;
 
-        // Actualizar la lista local de petHabits
-        setState(() {
-          petHabits.add(newHabit);
-          if (kDebugMode) {
-            print(newHabit);
-          }
-        });
+      final PetHabit newHabit = PetHabit(
+        id: habitId,
+        name: nameHabit,
+        userId: user,
+        room: room,
+        mechanic:
+            selectedMechanic ??
+            Mechanic.values.first, // fallback for random creation
+        personality: selectedPersonality ?? Personality.values.first,
+        petType: selectedPetType ?? PetType.values.first,
+      );
 
-        // Actualizar el Room en Firestore
-        final roomDoc =
-            await FirebaseFirestore.instance
-                .collection('rooms')
-                .doc(room)
-                .get();
-        if (roomDoc.exists) {
-          final currentPets =
-              (roomDoc.data()?['pets'] as List<dynamic>?)
-                  ?.map((pet) => PetHabit.fromMap(pet as Map<String, dynamic>))
-                  .toList() ??
-              [];
-          currentPets.add(newHabit);
+      await FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(room)
+          .collection('habits')
+          .doc(habitId)
+          .set(newHabit.toMap());
 
-          await FirebaseFirestore.instance.collection('rooms').doc(room).update(
-            {'pets': currentPets.map((pet) => pet.toMap()).toList()},
-          );
-        } else {
-          throw Exception('Room no encontrado en Firestore');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al crear el hábito: $e')),
-          );
-        }
-      }
+      setState(() {
+        petHabits.add(newHabit);
+      });
     }
   }
 
@@ -240,13 +201,13 @@ class PetHabitService {
                       value: selectedMechanic,
                       isExpanded: true,
                       items:
-                          Mechanic.values.map((Mechanic mechanic) {
+                          Mechanic.values.map((mechanic) {
                             return DropdownMenuItem<Mechanic>(
                               value: mechanic,
                               child: Text(mechanic.name),
                             );
                           }).toList(),
-                      onChanged: (Mechanic? newValue) {
+                      onChanged: (newValue) {
                         setDialogState(() {
                           selectedMechanic = newValue;
                         });
@@ -258,13 +219,13 @@ class PetHabitService {
                       value: selectedPersonality,
                       isExpanded: true,
                       items:
-                          Personality.values.map((Personality personality) {
+                          Personality.values.map((personality) {
                             return DropdownMenuItem<Personality>(
                               value: personality,
                               child: Text(personality.name),
                             );
                           }).toList(),
-                      onChanged: (Personality? newValue) {
+                      onChanged: (newValue) {
                         setDialogState(() {
                           selectedPersonality = newValue;
                         });
@@ -276,13 +237,13 @@ class PetHabitService {
                       value: selectedPetType,
                       isExpanded: true,
                       items:
-                          PetType.values.map((PetType petType) {
+                          PetType.values.map((petType) {
                             return DropdownMenuItem<PetType>(
                               value: petType,
                               child: Text(petType.name),
                             );
                           }).toList(),
-                      onChanged: (PetType? newValue) {
+                      onChanged: (newValue) {
                         setDialogState(() {
                           selectedPetType = newValue;
                         });
@@ -315,23 +276,45 @@ class PetHabitService {
     );
 
     if (newName != null && newName.isNotEmpty) {
+      final updatedHabit = PetHabit(
+        id: habit.id,
+        name: newName,
+        userId: habit.userId,
+        room: habit.room,
+        mechanic: selectedMechanic!,
+        personality: selectedPersonality!,
+        petType: selectedPetType!,
+        position: habit.position,
+        createdAt: habit.createdAt,
+        life: habit.life,
+        streak: habit.streak,
+        expAcumulated: habit.expAcumulated,
+        level: habit.level,
+        status: habit.status,
+        lastUpdated: DateTime.now(),
+      );
+
+      // Actualizar Firestore
+      final habitRef = await FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(room.id)
+          .collection('habits')
+          .doc(habit.id);
+
+      await habitRef.update(updatedHabit.toMap());
+
+      // Actualizar localmente
       setState(() {
         final index = petHabits.indexWhere((m) => m.id == habit.id);
         if (index != -1) {
-          petHabits[index] = PetHabit(
-            id: habit.id,
-            name: newName,
-            userModel: habit.userModel,
-            room: habit.room,
-            mechanic: selectedMechanic!,
-            personality: selectedPersonality!,
-            petType: selectedPetType!,
-            position: habit.position,
-            createdAt: habit.createdAt, // Preserve existing createdAt
-          );
-          room.pets = petHabits; // Update lugar's mascotas
+          petHabits[index] = updatedHabit;
+          room.pets = petHabits;
         }
       });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Hábito actualizado')));
     }
   }
 
@@ -366,10 +349,113 @@ class PetHabitService {
     );
 
     if (confirm == true) {
-      setState(() {
-        petHabits.removeWhere((m) => m.id == habit.id);
-        room.pets = petHabits; // Update lugar's mascotas
-      });
+      try {
+        // 1. Eliminar en Firestore
+        final docRef = FirebaseFirestore.instance
+            .collection('rooms')
+            .doc(habit.room)
+            .collection('habits')
+            .doc(habit.id);
+
+        await docRef.delete();
+
+        // 2. Eliminar localmente
+        setState(() {
+          petHabits.removeWhere((m) => m.id == habit.id);
+          room.pets = petHabits;
+        });
+
+        // 3. Mostrar feedback
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Hábito eliminado')));
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error al eliminar: $e')));
+      }
+    }
+  }
+
+  void updateLifeStatus(PetHabit habit, {required bool cumplidoHoy}) {
+    const int penalizacion = 10;
+    const int recompensa = 5;
+
+    final ahora = DateTime.now();
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+
+    final ultimaFecha = habit.lastUpdated;
+    final diferenciaDias = hoy.difference(ultimaFecha).inDays;
+
+    int nuevaVida = habit.life;
+
+    if (diferenciaDias > 0) {
+      nuevaVida -= penalizacion * diferenciaDias;
+    }
+
+    if (cumplidoHoy) {
+      nuevaVida += recompensa;
+      habit.streak += 1;
+    } else {
+      habit.streak = 0;
+    }
+
+    habit.life = nuevaVida.clamp(0, 100);
+    habit.lastUpdated = ahora;
+
+    // Actualiza estado
+    if (habit.life >= 90) {
+      habit.status = HabitStatus.feliz;
+    } else if (habit.life >= 50) {
+      habit.status = HabitStatus.normal;
+    } else if (habit.life > 0) {
+      habit.status = HabitStatus.enfermo;
+    } else {
+      habit.status = HabitStatus.muerto;
+    }
+  }
+
+  Future<void> marcarHabitComoHecho({
+    required BuildContext context,
+    required PetHabit habit,
+    required Room room,
+    required Function setState,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final lastDone = habit.lastUpdated;
+
+      if (lastDone == DateTime.now()) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Este hábito ya fue completado hoy.')),
+        );
+        return;
+      }
+
+      habit.streak += 1;
+      habit.life = (habit.life + 5).clamp(0, 100); // +5 vida diaria
+      habit.lastUpdated = now;
+
+      // Aquí podrías subir de nivel si quieres con lógica extra
+
+      // Actualiza en Firestore
+      final docRef = FirebaseFirestore.instance
+          .collection('rooms')
+          .doc(room.id)
+          .collection('habits')
+          .doc(habit.id);
+
+      await docRef.update(habit.toMap());
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('¡Hábito marcado como hecho! 🎉')),
+      );
+
+      setState(() {}); // Actualiza la UI si es necesario
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 }
