@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/services/habit_service.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
@@ -134,13 +136,29 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     }
   }
 
-  void _inviteMember() {
-    _roomService.addMember(
+  void _inviteMember() async {
+    final updatedRoom = await _roomService.addMember(
       context: context,
       room: widget.room,
       rooms: widget.rooms,
       setState: widget.setState,
     );
+    if (updatedRoom != null && context.mounted) {
+      // Reemplazar la pantalla actual con el Room actualizado
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => RoomDetailsScreen(
+                room: updatedRoom,
+                rooms: widget.rooms,
+                setState: widget.setState,
+                selectedIndex: widget.selectedIndex,
+                scrollToSelected: widget.scrollToSelected,
+              ),
+        ),
+      );
+    }
   }
 
   @override

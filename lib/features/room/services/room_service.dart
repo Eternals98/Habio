@@ -154,7 +154,7 @@ class RoomService {
   }
 
   // Añadir un miembro
-  Future<void> addMember({
+  Future<Room?> addMember({
     required BuildContext context,
     required Room room,
     required List<Room> rooms,
@@ -233,7 +233,7 @@ class RoomService {
             throw Exception('El uid del usuario está vacío');
           }
 
-          // Verificar si el miembro ya está en la lista
+          // Verificar si el miembro ya está en la lista usando un ciclo for
           for (final memberUid in room.members) {
             if (memberUid == newMember.uid) {
               if (kDebugMode) {
@@ -249,7 +249,7 @@ class RoomService {
                   );
                 }
               });
-              return;
+              return null; // No se actualizó, retornar null
             }
           }
 
@@ -280,24 +280,41 @@ class RoomService {
             }
           });
 
-          // Verificar si el Room existe en Firestore
-          final roomDoc =
-              await FirebaseFirestore.instance
-                  .collection('rooms')
-                  .doc(room.id)
-                  .get();
+          // Actualizar el Room en Firestore
+          final roomDocRef = FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(room.id);
+          final roomDoc = await roomDocRef.get();
           if (roomDoc.exists) {
-            await FirebaseFirestore.instance
-                .collection('rooms')
-                .doc(room.id)
-                .update({
-                  'members': FieldValue.arrayUnion([newMember.uid]),
-                  'shared': true,
-                });
+            await roomDocRef.update({
+              'members': FieldValue.arrayUnion([newMember.uid]),
+              'shared': true,
+            });
             if (kDebugMode) {
               print(
                 'Room actualizado en Firestore: ${room.id}, nuevo miembro: ${newMember.uid}',
               );
+            }
+
+            // Recargar el Room desde Firestore
+            final updatedRoomDoc = await roomDocRef.get();
+            if (updatedRoomDoc.exists) {
+              final updatedRoom = Room.fromMap(updatedRoomDoc.data()!);
+              setState(() {
+                final index = rooms.indexWhere((l) => l.id == room.id);
+                if (index != -1) {
+                  rooms[index] = updatedRoom;
+                  if (kDebugMode) {
+                    print('Room recargado desde Firestore: ${rooms[index]}');
+                  }
+                }
+              });
+              if (kDebugMode) {
+                print(
+                  'Recargando RoomDetailsScreen con Room actualizado: $updatedRoom',
+                );
+              }
+              return updatedRoom; // Retornar el Room actualizado
             }
           } else {
             throw Exception(
@@ -323,6 +340,7 @@ class RoomService {
         }
       }
     }
+    return null; // Retornar null si no se actualizó
   }
 
   // Eliminar un lugar
