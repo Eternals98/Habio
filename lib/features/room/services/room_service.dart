@@ -203,6 +203,9 @@ class RoomService {
 
     if (email != null && email.isNotEmpty) {
       try {
+        if (kDebugMode) {
+          print('Buscando usuario con email: $email');
+        }
         // Buscar el usuario en Firestore
         final querySnapshot =
             await FirebaseFirestore.instance
@@ -214,7 +217,25 @@ class RoomService {
           final doc = querySnapshot.docs.first;
           final newMember = UserModel.fromMap(doc.id, doc.data());
           if (kDebugMode) {
-            print(newMember.uid);
+            print('Usuario encontrado: ${newMember.uid}');
+          }
+
+          // Validar que el uid no esté vacío
+          if (newMember.uid.isEmpty) {
+            throw Exception('El uid del usuario está vacío');
+          }
+
+          // Verificar si el miembro ya está en la lista
+          if (room.members.contains(newMember.uid)) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('El usuario ya es miembro')),
+              );
+            }
+            if (kDebugMode) {
+              print('El usuario ${newMember.uid} ya está en members');
+            }
+            return;
           }
 
           // Actualizar la lista local de rooms
@@ -222,7 +243,7 @@ class RoomService {
             final index = rooms.indexWhere((l) => l.id == room.id);
             if (index != -1) {
               final updatedMembers = List<String>.from(room.members)
-                ..add(newMember.uid); // Agregar el uid del nuevo miembro
+                ..add(newMember.uid);
               rooms[index] = Room(
                 id: room.id,
                 name: room.name,
@@ -233,25 +254,48 @@ class RoomService {
                 shared: true,
               );
               if (kDebugMode) {
-                print(rooms[index].toString());
+                print('Room actualizado localmente: ${rooms[index]}');
+              }
+            } else {
+              if (kDebugMode) {
+                print(
+                  'Error: Room con id ${room.id} no encontrado en la lista local',
+                );
               }
             }
           });
 
-          // Actualizar el Room en Firestore
-          await FirebaseFirestore.instance
-              .collection('rooms')
-              .doc(room.id)
-              .update({
-                'members': FieldValue.arrayUnion([
-                  newMember.uid,
-                ]), // Agregar el uid a members
-                'shared': true,
-              });
+          // Verificar si el Room existe en Firestore
+          final roomDoc =
+              await FirebaseFirestore.instance
+                  .collection('rooms')
+                  .doc(room.id)
+                  .get();
+          if (roomDoc.exists) {
+            await FirebaseFirestore.instance
+                .collection('rooms')
+                .doc(room.id)
+                .update({
+                  'members': FieldValue.arrayUnion([newMember.uid]),
+                  'shared': true,
+                });
+            if (kDebugMode) {
+              print(
+                'Room actualizado en Firestore: ${room.id}, nuevo miembro: ${newMember.uid}',
+              );
+            }
+          } else {
+            throw Exception(
+              'Room con id ${room.id} no encontrado en Firestore',
+            );
+          }
         } else if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Usuario no encontrado')),
           );
+          if (kDebugMode) {
+            print('Usuario no encontrado para el email: $email');
+          }
         }
       } catch (e) {
         if (kDebugMode) {
