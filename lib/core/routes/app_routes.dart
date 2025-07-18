@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:per_habit/core/routes/go_router_refresh.dart';
 
 import 'package:per_habit/features/splash/splash_screen.dart';
-import 'package:per_habit/features/auth/screens/login_screen.dart';
-import 'package:per_habit/features/auth/screens/register_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/login_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/register_screen.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
-import 'package:per_habit/features/auth/screens/profile_screen.dart';
+import 'package:per_habit/features/auth/presentation/profile_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
