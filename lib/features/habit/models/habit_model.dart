@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:logger/logger.dart';
 import 'package:per_habit/features/habit/types/mechanic.dart';
 import 'package:per_habit/features/habit/types/personality.dart';
 import 'package:per_habit/features/habit/types/petType.dart';
@@ -96,16 +97,28 @@ class PetHabit {
     String room,
     Map<String, int> petInventory,
   ) {
+    final logger = Logger();
     final random = math.Random();
-    // Filtrar PetTypes con inventario > 0
-    List<PetType> availablePets =
+    // Filtrar PetTypes con inventario > 0 o perro
+    final availablePets =
         PetType.values
-            .where((pet) => (petInventory[pet.name] ?? 0) > 0)
+            .where(
+              (pet) =>
+                  pet == PetType.perro || (petInventory[pet.name] ?? 0) > 0,
+            )
             .toList();
 
+    logger.i(
+      'Available PetTypes: ${availablePets.map((p) => p.name).toList()}',
+    );
     if (availablePets.isEmpty) {
+      logger.e('No hay mascotas disponibles en el inventario');
       throw Exception('No hay mascotas disponibles en el inventario');
     }
+
+    final selectedPetType = availablePets[random.nextInt(availablePets.length)];
+    logger.i('Selected PetType: ${selectedPetType.name}');
+
     return PetHabit(
       id: id,
       name: name,
@@ -114,12 +127,11 @@ class PetHabit {
       mechanic: Mechanic.values[random.nextInt(Mechanic.values.length)],
       personality:
           Personality.values[random.nextInt(Personality.values.length)],
-      petType: PetType.values[random.nextInt(PetType.values.length)],
+      petType: selectedPetType,
       position: const Offset(50, 50),
       createdAt: DateTime.now(),
     );
   }
-
   @override
   String toString() {
     return 'Habit(id: $id, name: $name, user: $userId, room: $room, mechanic: $mechanic, personality: $personality, petType: $petType createdAt: $createdAt)';

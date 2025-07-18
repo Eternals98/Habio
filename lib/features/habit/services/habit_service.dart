@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:per_habit/features/auth/services/user_services.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/habit/types/status.dart';
@@ -20,12 +21,20 @@ class PetHabitService {
     required Function setState,
     required String userModel,
   }) async {
+    final logger = Logger();
     Mechanic? selectedMechanic;
     Personality? selectedPersonality;
     PetType? selectedPetType;
 
     final user = await _userServices.getUserById(userModel);
-    Map<String, int> petInventory = user!.petInventory;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: No se pudo cargar el usuario')),
+      );
+      return;
+    }
+    Map<String, int> petInventory = user.petInventory;
+    logger.i('Pet Inventory: $petInventory');
 
     final String? nameHabit = await showDialog<String>(
       context: context,
@@ -92,10 +101,7 @@ class PetHabitService {
                             int count = petInventory[petType.name] ?? 0;
                             return DropdownMenuItem<PetType>(
                               value: petType,
-                              enabled:
-                                  count > 0 ||
-                                  petType ==
-                                      PetType.perro, // Always enable perro
+                              enabled: count > 0 || petType == PetType.perro,
                               child: Text(
                                 '${petType.name} (Disponibles: ${petType == PetType.perro ? '∞' : count})',
                               ),
@@ -209,13 +215,37 @@ class PetHabitService {
             room,
             petInventory,
           );
+          logger.i(
+            'Random PetHabit created with PetType: ${newHabit.petType.name}',
+          );
+
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(room)
+              .collection('habits')
+              .doc(habitId)
+              .set(newHabit.toMap());
+
+          // Only decrease inventory if not perro
+          if (newHabit.petType != PetType.perro) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({
+                  'petInventory.${newHabit.petType.name}': FieldValue.increment(
+                    -1,
+                  ),
+                });
+          }
+
           setState(() {
             petHabits.add(newHabit);
           });
         } catch (e) {
+          logger.e('Error creating random habit: $e');
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          ).showSnackBar(SnackBar(content: Text('Error: $e')));
         }
       }
     }
