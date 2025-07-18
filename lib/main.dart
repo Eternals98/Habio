@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:per_habit/core/routes/app_routes.dart';
-import 'package:per_habit/firebase_options.dart'; // Asegúrate de tener este archivo generado por Firebase CLI
+import 'package:per_habit/firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // 👈 para web/mobile
   );
-  runApp(const MyApp());
+runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
