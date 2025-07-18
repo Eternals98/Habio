@@ -10,6 +10,8 @@ class UserModel {
   final List<String> roomsJoined;
   final DateTime createdAt;
   final DateTime lastActive;
+  final Map<String, int>
+  petInventory; // Nuevo atributo para inventario de mascotas
 
   UserModel({
     required this.uid,
@@ -21,34 +23,35 @@ class UserModel {
     this.roomsJoined = const [],
     DateTime? createdAt,
     DateTime? lastActive,
+    this.petInventory = const {}, // Inicializa como mapa vacío
   }) : createdAt = createdAt ?? DateTime.now(),
-      lastActive = lastActive ?? DateTime.now();
+       lastActive = lastActive ?? DateTime.now();
 
-  factory UserModel.fromMap(String uid, Map<String, dynamic> map) {
-    return UserModel(
-      uid: uid,
-      email: map['email'] ?? '',
-      displayName: map['displayName'] ?? '',
-      photoUrl: map['photoUrl'] ?? '',
-      bio: map['bio'] ?? '',
-      roomsOwned: List<String>.from(map['roomsOwned'] ?? []),
-      roomsJoined: List<String>.from(map['roomsJoined'] ?? []),
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      lastActive: (map['lastActive'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    );
-  }
+  // Convertir UserModel a un mapa para Firestore
+  Map<String, dynamic> toMap() => {
+    'uid': uid,
+    'email': email,
+    'displayName': displayName,
+    'photoUrl': photoUrl,
+    'bio': bio,
+    'roomsOwned': roomsOwned,
+    'roomsJoined': roomsJoined,
+    'createdAt': createdAt,
+    'lastActive': lastActive,
+    'petInventory': petInventory,
+  };
 
-  Map<String, dynamic> toMap() {
-    return {
-      'uid': uid,
-      'email': email,
-      'displayName': displayName,
-      'photoUrl': photoUrl,
-      'bio': bio,
-      'roomsOwned': roomsOwned,
-      'roomsJoined': roomsJoined,
-      'createdAt': createdAt,
-      'lastActive': lastActive,
-    };
-  }
+  // Crear un UserModel desde un mapa de Firestore
+  factory UserModel.fromMap(Map<String, dynamic> data) => UserModel(
+    uid: data['uid'] ?? '',
+    email: data['email'] ?? '',
+    displayName: data['displayName'] ?? '',
+    photoUrl: data['photoUrl'] ?? '',
+    bio: data['bio'] ?? '',
+    roomsOwned: List<String>.from(data['roomsOwned'] ?? []),
+    roomsJoined: List<String>.from(data['roomsJoined'] ?? []),
+    createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    lastActive: (data['lastActive'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    petInventory: Map<String, int>.from(data['petInventory'] ?? {}),
+  );
 }

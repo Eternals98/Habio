@@ -89,8 +89,23 @@ class PetHabit {
   }
 
   // Método random para crear un PetHabit aleatorio
-  factory PetHabit.random(String id, String name, String user, String room) {
+  factory PetHabit.random(
+    String id,
+    String name,
+    String user,
+    String room,
+    Map<String, int> petInventory,
+  ) {
     final random = math.Random();
+    // Filtrar PetTypes con inventario > 0
+    List<PetType> availablePets =
+        PetType.values
+            .where((pet) => (petInventory[pet.name] ?? 0) > 0)
+            .toList();
+
+    if (availablePets.isEmpty) {
+      throw Exception('No hay mascotas disponibles en el inventario');
+    }
     return PetHabit(
       id: id,
       name: name,

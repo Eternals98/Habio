@@ -219,7 +219,7 @@ class RoomService {
           if (kDebugMode) {
             print('Documento encontrado: ${doc.data()}');
           }
-          final newMember = UserModel.fromMap(doc.id, doc.data());
+          final newMember = UserModel.fromMap(doc.data());
           if (kDebugMode) {
             print('Usuario encontrado: ${newMember.uid}');
           }

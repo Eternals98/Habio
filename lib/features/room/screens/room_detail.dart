@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/habit/services/habit_service.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
@@ -30,6 +31,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
   late List<PetHabit> _petHabits;
   final RoomService _roomService = RoomService();
   final PetHabitService _petHabitService = PetHabitService();
+  final user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
@@ -43,7 +45,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
       petHabits: _petHabits,
       room: widget.room.id,
       setState: setState,
-      user: widget.room.owner,
+      userModel: user!.uid,
     );
   }
 

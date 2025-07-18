@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:per_habit/features/auth/services/user_services.dart';
 import 'package:per_habit/features/habit/models/habit_model.dart';
 import 'package:per_habit/features/habit/types/status.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
@@ -9,17 +10,22 @@ import 'package:per_habit/features/habit/types/personality.dart';
 import 'package:per_habit/features/habit/types/petType.dart';
 
 class PetHabitService {
+  final UserServices _userServices = UserServices.instance;
+
   // Crear un hábito
   Future<void> addHabit({
     required BuildContext context,
     required List<PetHabit> petHabits,
     required String room,
     required Function setState,
-    required String user,
+    required String userModel,
   }) async {
     Mechanic? selectedMechanic;
     Personality? selectedPersonality;
     PetType? selectedPetType;
+
+    final user = await _userServices.getUserById(userModel);
+    Map<String, int> petInventory = user!.petInventory;
 
     final String? nameHabit = await showDialog<String>(
       context: context,
@@ -83,15 +89,26 @@ class PetHabitService {
                       isExpanded: true,
                       items:
                           PetType.values.map((PetType petType) {
+                            int count = petInventory[petType.name] ?? 0;
                             return DropdownMenuItem<PetType>(
                               value: petType,
-                              child: Text(petType.name),
+                              enabled:
+                                  count > 0 ||
+                                  petType ==
+                                      PetType.perro, // Always enable perro
+                              child: Text(
+                                '${petType.name} (Disponibles: ${petType == PetType.perro ? '∞' : count})',
+                              ),
                             );
                           }).toList(),
                       onChanged: (PetType? newValue) {
-                        setDialogState(() {
-                          selectedPetType = newValue;
-                        });
+                        if (newValue == PetType.perro ||
+                            (petInventory[newValue?.name ?? ''] != null &&
+                                petInventory[newValue!.name]! > 0)) {
+                          setDialogState(() {
+                            selectedPetType = newValue;
+                          });
+                        }
                       },
                     ),
                   ],
@@ -108,7 +125,9 @@ class PetHabitService {
                     if (controller.text.trim().isNotEmpty &&
                         selectedMechanic != null &&
                         selectedPersonality != null &&
-                        selectedPetType != null) {
+                        selectedPetType != null &&
+                        (selectedPetType == PetType.perro ||
+                            (petInventory[selectedPetType!.name] ?? 0) > 0)) {
                       Navigator.of(context).pop(controller.text.trim());
                     }
                   },
@@ -137,28 +156,68 @@ class PetHabitService {
               .doc()
               .id;
 
-      final PetHabit newHabit = PetHabit(
-        id: habitId,
-        name: nameHabit,
-        userId: user,
-        room: room,
-        mechanic:
-            selectedMechanic ??
-            Mechanic.values.first, // fallback for random creation
-        personality: selectedPersonality ?? Personality.values.first,
-        petType: selectedPetType ?? PetType.values.first,
-      );
+      if (selectedPetType != null) {
+        // Creación normal
+        final newHabit = PetHabit(
+          id: habitId,
+          name: nameHabit,
+          userId: user.uid,
+          room: room,
+          mechanic: selectedMechanic ?? Mechanic.values.first,
+          personality: selectedPersonality ?? Personality.values.first,
+          petType: selectedPetType!,
+        );
 
-      await FirebaseFirestore.instance
-          .collection('rooms')
-          .doc(room)
-          .collection('habits')
-          .doc(habitId)
-          .set(newHabit.toMap());
+        if (selectedPetType == PetType.perro ||
+            (petInventory[newHabit.petType.name] ?? 0) > 0) {
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(room)
+              .collection('habits')
+              .doc(habitId)
+              .set(newHabit.toMap());
 
-      setState(() {
-        petHabits.add(newHabit);
-      });
+          // Only decrease inventory if not perro
+          if (selectedPetType != PetType.perro) {
+            await FirebaseFirestore.instance
+                .collection('users')
+                .doc(user.uid)
+                .update({
+                  'petInventory.${newHabit.petType.name}': FieldValue.increment(
+                    -1,
+                  ),
+                });
+          }
+
+          setState(() {
+            petHabits.add(newHabit);
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('No tienes un ${newHabit.petType.name} disponible'),
+            ),
+          );
+        }
+      } else {
+        // Creación aleatoria
+        try {
+          final newHabit = PetHabit.random(
+            habitId,
+            nameHabit,
+            user.uid,
+            room,
+            petInventory,
+          );
+          setState(() {
+            petHabits.add(newHabit);
+          });
+        } catch (e) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
+        }
+      }
     }
   }
 
@@ -295,7 +354,7 @@ class PetHabitService {
       );
 
       // Actualizar Firestore
-      final habitRef = await FirebaseFirestore.instance
+      final habitRef = FirebaseFirestore.instance
           .collection('rooms')
           .doc(room.id)
           .collection('habits')
