@@ -3,8 +3,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:per_habit/features/auth/services/auth_service.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 import 'package:per_habit/core/theme/app_colors.dart';
+import 'package:per_habit/features/auth/services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -26,9 +29,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-
-    final email = _emailController.text;
-    final password = _passwordController.text;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
     try {
       UserCredential? user;
@@ -72,8 +74,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor =
+        isDark ? AppColors.primaryBackgroundDark : AppColors.primaryBackground;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: backgroundColor,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
@@ -82,17 +88,36 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset('assets/images/logo.png', height: 120),
+                Text(
+                  'Habbito',
+                  style: GoogleFonts.poppins(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryText,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Text(
-                  _isLogin ? 'Bienvenido a Habio' : 'Crea tu cuenta',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
+                  _isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta',
+                  style: GoogleFonts.poppins(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryText,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _isLogin
+                      ? 'Inicia sesión para continuar'
+                      : 'Regístrate para empezar',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppColors.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 32),
+
+                // Email
                 TextFormField(
                   controller: _emailController,
                   focusNode: _emailFocus,
@@ -101,25 +126,31 @@ class _LoginScreenState extends State<LoginScreen> {
                           FocusScope.of(context).requestFocus(_passwordFocus),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Ingresa tu correo o usuario';
+                      return 'Ingresa tu correo';
                     }
-                    if (!value.contains('@') && !value.contains('.')) {
+                    if (!value.contains('@') || !value.contains('.')) {
                       return 'Correo inválido';
                     }
                     return null;
                   },
                   decoration: InputDecoration(
-                    labelText: 'Usuario o Email',
-                    prefixIcon: const Icon(Icons.person),
+                    labelText: 'Correo electrónico',
+                    prefixIcon: const Icon(Icons.email_outlined),
                     filled: true,
                     fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Password
                 TextFormField(
                   controller: _passwordController,
                   focusNode: _passwordFocus,
@@ -134,16 +165,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                   decoration: InputDecoration(
                     labelText: 'Contraseña',
-                    prefixIcon: const Icon(Icons.lock),
+                    prefixIcon: const Icon(Icons.lock_outline),
                     filled: true,
                     fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 18,
+                    ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // Botón iniciar sesión / registrarse
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -152,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child:
@@ -161,19 +198,68 @@ class _LoginScreenState extends State<LoginScreen> {
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
+                                strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   Colors.white,
                                 ),
-                                strokeWidth: 2,
                               ),
                             )
                             : Text(
                               _isLogin ? 'Iniciar sesión' : 'Registrarse',
-                              style: const TextStyle(fontSize: 16),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
                             ),
                   ),
                 ),
+
+                const SizedBox(height: 20),
+
+                // Divider
+                Row(
+                  children: const [
+                    Expanded(child: Divider()),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      child: Text('o continúa con'),
+                    ),
+                    Expanded(child: Divider()),
+                  ],
+                ),
                 const SizedBox(height: 16),
+
+                // Social buttons (decorativos)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.google,
+                        color: Colors.redAccent,
+                      ),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.facebook,
+                        color: Colors.blueAccent,
+                      ),
+                      onPressed: () {},
+                    ),
+                    IconButton(
+                      icon: const FaIcon(
+                        FontAwesomeIcons.apple,
+                        color: Colors.black,
+                      ),
+                      onPressed: () {},
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Alternar login/registro
                 TextButton(
                   onPressed:
                       _loading
