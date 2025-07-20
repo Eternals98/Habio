@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:per_habit/core/routes/app_routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+// ignore: unused_import
+import 'package:per_habit/devtools/config_uploader.dart';
 import 'package:per_habit/firebase_options.dart';
 
 void main() async {
@@ -8,7 +11,8 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform, // 👈 para web/mobile
   );
-runApp(const MyApp());
+  //await uploadConfigData();
+  runApp(ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {

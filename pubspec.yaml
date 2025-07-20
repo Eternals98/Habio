@@ -72,7 +72,7 @@ dependencies:
   path_provider_windows: 2.3.0
   plugin_platform_interface: 2.1.8
   provider: 6.1.5
-  rxdart: ^0.28.0
+  rxdart: ^0.27.7
   shared_preferences: 2.5.3
   shared_preferences_android: 2.4.10
   shared_preferences_foundation: 2.5.4

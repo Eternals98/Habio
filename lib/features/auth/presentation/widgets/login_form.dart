@@ -4,9 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
-import 'package:per_habit/features/auth/presentation/controller/auth_providers.dart';
-
-
+import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 
 class LoginForm extends ConsumerWidget {
   final bool isLogin;
@@ -109,7 +107,8 @@ class LoginForm extends ConsumerWidget {
             controller: passwordController,
             obscureText: true,
             validator: (value) {
-              if (value == null || value.isEmpty) return 'Ingresa tu contraseña';
+              if (value == null || value.isEmpty)
+                return 'Ingresa tu contraseña';
               if (value.length < 6) return 'Mínimo 6 caracteres';
               return null;
             },
@@ -134,11 +133,14 @@ class LoginForm extends ConsumerWidget {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: authState.loading
-                    ? null
-                    : () {
-                        context.push('/reset-password'); // <-- Asegúrate de tener esta ruta en GoRouter
-                      },
+                onPressed:
+                    authState.loading
+                        ? null
+                        : () {
+                          context.push(
+                            '/reset-password',
+                          ); // <-- Asegúrate de tener esta ruta en GoRouter
+                        },
                 child: const Text(
                   '¿Olvidaste tu contraseña?',
                   style: TextStyle(color: AppColors.primary),
@@ -159,21 +161,25 @@ class LoginForm extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: authState.loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white,
+              child:
+                  authState.loading
+                      ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                      : Text(
+                        isLogin ? 'Iniciar sesión' : 'Registrarse',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.white,
                         ),
                       ),
-                    )
-                  : Text(
-                      isLogin ? 'Iniciar sesión' : 'Registrarse',
-                      style: const TextStyle(fontSize: 16, color: Colors.white),
-                    ),
             ),
           ),
 
@@ -197,11 +203,17 @@ class LoginForm extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const FaIcon(FontAwesomeIcons.google, color: Colors.redAccent),
+                icon: const FaIcon(
+                  FontAwesomeIcons.google,
+                  color: Colors.redAccent,
+                ),
                 onPressed: () {},
               ),
               IconButton(
-                icon: const FaIcon(FontAwesomeIcons.facebook, color: Colors.blueAccent),
+                icon: const FaIcon(
+                  FontAwesomeIcons.facebook,
+                  color: Colors.blueAccent,
+                ),
                 onPressed: () {},
               ),
               IconButton(
@@ -213,7 +225,27 @@ class LoginForm extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          // Error
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                isLogin ? '¿No tienes cuenta? ' : '¿Ya tienes cuenta? ',
+                style: const TextStyle(color: Colors.black54),
+              ),
+              TextButton(
+                onPressed: () {
+                  final target = isLogin ? '/register' : '/login';
+                  context.go(target);
+                },
+                child: Text(
+                  isLogin ? 'Regístrate' : 'Inicia sesión',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+
+          // Mostrar error
           if (authState.error != null)
             Padding(
               padding: const EdgeInsets.only(top: 12),

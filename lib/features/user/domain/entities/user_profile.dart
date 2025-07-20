@@ -1,29 +1,17 @@
 class UserProfile {
-  final String uid;
+  final String id;
   final String email;
   final String displayName;
-  final String? avatarUrl;
+  final String bio;
+  final String photoUrl;
   final bool onboardingCompleted;
 
   const UserProfile({
-    required this.uid,
+    required this.id,
     required this.email,
     required this.displayName,
-    this.avatarUrl,
+    required this.bio,
+    required this.photoUrl,
     this.onboardingCompleted = false,
   });
-
-  UserProfile copyWith({
-    String? displayName,
-    String? avatarUrl,
-    bool? onboardingCompleted,
-  }) {
-    return UserProfile(
-      uid: uid,
-      email: email,
-      displayName: displayName ?? this.displayName,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
-      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
-    );
-  }
 }

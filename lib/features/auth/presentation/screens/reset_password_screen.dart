@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
-import 'package:per_habit/features/auth/presentation/controller/auth_providers.dart';
+import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 
 import '../../../../core/theme/app_colors.dart';
 

@@ -1,5 +1,3 @@
-
-
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 import 'package:per_habit/features/user/domain/repositories/user_repository.dart';
 
@@ -10,6 +8,6 @@ class GetUserProfileUseCase {
   GetUserProfileUseCase(this.repository);
 
   Future<UserProfile> call(String uid) {
-    return repository.getProfile(uid);
+    return repository.getUserProfile(uid);
   }
 }

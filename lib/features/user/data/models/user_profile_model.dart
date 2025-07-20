@@ -1,24 +1,22 @@
-class UserProfileModel {
-  final String uid;
-  final String email;
-  final String displayName;
-  final String? avatarUrl;
-  final bool onboardingCompleted;
+import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 
+class UserProfileModel extends UserProfile {
   const UserProfileModel({
-    required this.uid,
-    required this.email,
-    required this.displayName,
-    this.avatarUrl,
-    this.onboardingCompleted = false,
+    required super.id,
+    required super.email,
+    required super.displayName,
+    required super.bio,
+    required super.photoUrl,
+    super.onboardingCompleted = false,
   });
 
-  factory UserProfileModel.fromMap(Map<String, dynamic> map, String uid) {
+  factory UserProfileModel.fromMap(Map<String, dynamic> map, String id) {
     return UserProfileModel(
-      uid: uid,
+      id: id,
       email: map['email'] ?? '',
       displayName: map['displayName'] ?? '',
-      avatarUrl: map['avatarUrl'],
+      bio: map['bio'] ?? '',
+      photoUrl: map['photoUrl'] ?? '',
       onboardingCompleted: map['onboardingCompleted'] ?? false,
     );
   }
@@ -27,7 +25,8 @@ class UserProfileModel {
     return {
       'email': email,
       'displayName': displayName,
-      'avatarUrl': avatarUrl,
+      'bio': bio,
+      'photoUrl': photoUrl,
       'onboardingCompleted': onboardingCompleted,
     };
   }

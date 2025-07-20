@@ -8,6 +8,6 @@ class UpdateUserProfileUseCase {
   UpdateUserProfileUseCase(this.repository);
 
   Future<void> call(UserProfile profile) {
-    return repository.updateProfile(profile);
+    return repository.updateUserProfile(profile);
   }
 }

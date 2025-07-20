@@ -1,24 +1,25 @@
-
-import 'package:per_habit/features/user/data/models/user_profile_model.dart';
-import 'package:per_habit/features/user/domain/entities/user_profile.dart';
+import '../../domain/entities/user_profile.dart';
+import '../models/user_profile_model.dart';
 
 class UserProfileMapper {
   static UserProfile fromModel(UserProfileModel model) {
     return UserProfile(
-      uid: model.uid,
+      id: model.id,
       email: model.email,
       displayName: model.displayName,
-      avatarUrl: model.avatarUrl,
+      bio: model.bio,
+      photoUrl: model.photoUrl,
       onboardingCompleted: model.onboardingCompleted,
     );
   }
 
   static UserProfileModel toModel(UserProfile entity) {
     return UserProfileModel(
-      uid: entity.uid,
+      id: entity.id,
       email: entity.email,
       displayName: entity.displayName,
-      avatarUrl: entity.avatarUrl,
+      bio: entity.bio,
+      photoUrl: entity.photoUrl,
       onboardingCompleted: entity.onboardingCompleted,
     );
   }

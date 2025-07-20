@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 
-
 class UserProfileForm extends ConsumerWidget {
   final UserProfile profile;
 
@@ -12,7 +11,7 @@ class UserProfileForm extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController(text: profile.displayName);
-    final avatarController = TextEditingController(text: profile.avatarUrl ?? '');
+    final avatarController = TextEditingController(text: profile.photoUrl);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,10 +29,7 @@ class UserProfileForm extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Avatar URL',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        const Text('Avatar URL', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         TextField(
           controller: avatarController,
@@ -47,9 +43,13 @@ class UserProfileForm extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              final updated = profile.copyWith(
+              final updated = UserProfile(
+                id: profile.id,
+                email: profile.email,
                 displayName: nameController.text.trim(),
-                avatarUrl: avatarController.text.trim(),
+                bio: profile.bio,
+                photoUrl: avatarController.text.trim(),
+                onboardingCompleted: profile.onboardingCompleted,
               );
 
               ref.read(userControllerProvider.notifier).updateProfile(updated);
