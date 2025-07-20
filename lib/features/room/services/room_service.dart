@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/room/models/room_model.dart';
-import 'package:per_habit/features/auth/models/user_model.dart';
+import 'package:per_habit/features/auth/data/models/user_model.dart';
 
 class RoomService {
   // Crear un lugar

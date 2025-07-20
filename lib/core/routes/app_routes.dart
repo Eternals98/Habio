@@ -6,7 +6,9 @@ import 'package:per_habit/features/splash/splash_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/login_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/register_screen.dart';
 import 'package:per_habit/features/room/screens/home_screen.dart';
-import 'package:per_habit/features/auth/presentation/profile_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:per_habit/features/user/presentation/screens/user_profile_screen.dart';
+
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -40,6 +42,11 @@ class AppRouter {
         path: '/register',
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/reset-password',
+        name: 'reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
       ),
       GoRoute(
         path: '/home',

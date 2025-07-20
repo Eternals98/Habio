@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:per_habit/features/auth/models/user_model.dart';
+import 'package:per_habit/features/auth/data/models/user_model.dart';
 import 'package:logger/logger.dart';
 
 class UserServices {
