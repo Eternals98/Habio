@@ -6,8 +6,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 
-class LoginForm extends ConsumerWidget {
-  const LoginForm({super.key});
+class RegisterForm extends ConsumerWidget {
+  const RegisterForm({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,46 +16,28 @@ class LoginForm extends ConsumerWidget {
 
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
+    final confirmController = TextEditingController();
+
     final emailFocus = FocusNode();
     final passwordFocus = FocusNode();
+    final confirmFocus = FocusNode();
+
     final formKey = GlobalKey<FormState>();
 
-    Future<void> handleAuth() async {
+    Future<void> handleRegister() async {
       if (!formKey.currentState!.validate()) return;
+
       final email = emailController.text.trim();
       final password = passwordController.text.trim();
 
-      await authController.login(email, password);
+      await authController.register(email, password);
       final user = ref.read(authControllerProvider).user;
-      final error = ref.read(authControllerProvider).error;
 
       if (user != null) {
-        context.goNamed('home');
-      } else if (error != null &&
-          error.toLowerCase().contains('invalid-credential')) {
-        showDialog(
-          context: context,
-          builder:
-              (_) => AlertDialog(
-                title: const Text('Ups 😥'),
-                content: const Text(
-                  'Usuario no encontrado.\nVerifica tu correo o regístrate.',
-                ),
-                actions: [
-                  TextButton(
-                    child: const Text('Registrarme'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.go('/register');
-                    },
-                  ),
-                  TextButton(
-                    child: const Text('Volver'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registro exitoso. Inicia sesión.')),
         );
+        context.go('/login');
       }
     }
 
@@ -74,7 +56,7 @@ class LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'Bienvenido de nuevo',
+            'Crea tu cuenta',
             style: GoogleFonts.poppins(
               fontSize: 26,
               fontWeight: FontWeight.w700,
@@ -83,7 +65,7 @@ class LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Inicia sesión para continuar',
+            'Regístrate para empezar',
             style: GoogleFonts.poppins(
               fontSize: 14,
               color: AppColors.secondaryText,
@@ -122,16 +104,17 @@ class LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Password
+          // Contraseña
           TextFormField(
             controller: passwordController,
             focusNode: passwordFocus,
-            textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => handleAuth(),
+            textInputAction: TextInputAction.next,
+            onFieldSubmitted:
+                (_) => FocusScope.of(context).requestFocus(confirmFocus),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Ingresa tu contraseña';
+                return 'Ingresa una contraseña';
               }
               if (value.length < 6) return 'Mínimo 6 caracteres';
               return null;
@@ -151,28 +134,45 @@ class LoginForm extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed:
-                  authState.loading
-                      ? null
-                      : () => context.push('/reset-password'),
-              child: const Text(
-                '¿Olvidaste tu contraseña?',
-                style: TextStyle(color: AppColors.primary),
+          // Confirmar contraseña
+          TextFormField(
+            controller: confirmController,
+            focusNode: confirmFocus,
+            obscureText: true,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => handleRegister(),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Confirma tu contraseña';
+              }
+              if (value != passwordController.text) {
+                return 'Las contraseñas no coinciden';
+              }
+              return null;
+            },
+            decoration: InputDecoration(
+              labelText: 'Confirmar contraseña',
+              prefixIcon: const Icon(Icons.lock_outline),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 18,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
 
-          // Login Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: authState.loading ? null : handleAuth,
+              onPressed: authState.loading ? null : handleRegister,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -193,14 +193,14 @@ class LoginForm extends ConsumerWidget {
                         ),
                       )
                       : const Text(
-                        'Iniciar sesión',
+                        'Registrarse',
                         style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
             ),
           ),
+
           const SizedBox(height: 20),
 
-          // Divider
           const Row(
             children: [
               Expanded(child: Divider()),
@@ -213,7 +213,6 @@ class LoginForm extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
 
-          // Social buttons
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
@@ -230,13 +229,13 @@ class LoginForm extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                '¿No tienes cuenta? ',
+                '¿Ya tienes cuenta? ',
                 style: TextStyle(color: Colors.black54),
               ),
               TextButton(
-                onPressed: () => context.go('/register'),
+                onPressed: () => context.go('/login'),
                 child: const Text(
-                  'Regístrate',
+                  'Inicia sesión',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),

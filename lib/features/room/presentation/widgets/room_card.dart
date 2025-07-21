@@ -54,10 +54,6 @@ class RoomCard extends StatelessWidget {
                   'assets/images/room_icons/room_base.svg',
                   width: 72,
                   height: 72,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.grey,
-                    BlendMode.srcIn,
-                  ),
                 ),
               ),
             ),
