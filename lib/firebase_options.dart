@@ -30,10 +30,7 @@ class DefaultFirebaseOptions {
           'you can reconfigure this by running the FlutterFire CLI again.',
         );
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -52,16 +49,16 @@ class DefaultFirebaseOptions {
     messagingSenderId: '557450296752',
     projectId: 'habio-35e46',
     authDomain: 'habio-35e46.firebaseapp.com',
-    storageBucket: 'habio-35e46.firebasestorage.app',
+    storageBucket: 'habio-35e46.appspot.com',
     measurementId: 'G-NRK7C491Q1',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyB-YrcDbZK81ePVy9zoGIh9wsbdewaLnbU',
-    appId: '1:557450296752:android:c3adc42387b95cbe4e6a75',
+    appId: '1:557450296752:android:956783250bbfc0674e6a75',
     messagingSenderId: '557450296752',
     projectId: 'habio-35e46',
-    storageBucket: 'habio-35e46.firebasestorage.app',
+    storageBucket: 'habio-35e46.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
@@ -69,7 +66,18 @@ class DefaultFirebaseOptions {
     appId: '1:557450296752:ios:e317ca104fe8806f4e6a75',
     messagingSenderId: '557450296752',
     projectId: 'habio-35e46',
-    storageBucket: 'habio-35e46.firebasestorage.app',
+    storageBucket: 'habio-35e46.appspot.com',
     iosBundleId: 'com.example.perHabit',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyD-QkXRKq6wlXMY6TUxItM59-1vKtZDRsM',
+    appId: '1:557450296752:web:9c17ecd8b71b1ab14e6a75',
+    messagingSenderId: '557450296752',
+    projectId: 'habio-35e46',
+    authDomain: 'habio-35e46.firebaseapp.com',
+    storageBucket: 'habio-35e46.appspot.com',
+    measurementId: 'G-2DCT21WXRV',
+  );
+
 }

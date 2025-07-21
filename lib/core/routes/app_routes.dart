@@ -1,33 +1,41 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:per_habit/core/routes/go_router_refresh.dart';
+import 'package:per_habit/features/room/presentation/screens/room_detail_screen.dart';
 
 import 'package:per_habit/features/splash/splash_screen.dart';
-import 'package:per_habit/features/auth/screens/login_screen.dart';
-import 'package:per_habit/features/auth/screens/register_screen.dart';
-import 'package:per_habit/features/room/screens/home_screen.dart';
-import 'package:per_habit/features/auth/screens/profile_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/login_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/register_screen.dart';
+import 'package:per_habit/features/room/presentation/screens/home_screen.dart';
+import 'package:per_habit/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:per_habit/features/user/presentation/screens/user_profile_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/', // Ruta inicial es SplashScreen
     refreshListenable: GoRouterRefreshStream(
       FirebaseAuth.instance.authStateChanges(),
     ),
     redirect: (context, state) {
       final user = FirebaseAuth.instance.currentUser;
       final location = state.uri.toString();
+
+      // ✅ Permitir que SplashScreen maneje la navegación inicial
+      if (location == '/') return null;
+
       final isLoggingIn = location == '/login' || location == '/register';
 
+      // 🔒 Si no ha iniciado sesión, redirige a login (excepto en splash)
       if (user == null && !isLoggingIn) {
         return '/login';
       }
 
+      // ✅ Si ya está logueado, evita que acceda a login/register
       if (user != null && isLoggingIn) {
         return '/home';
       }
 
-      return null; // no redirección
+      return null; // Sin redirección
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
@@ -42,6 +50,11 @@ class AppRouter {
         builder: (context, state) => const RegisterScreen(),
       ),
       GoRoute(
+        path: '/reset-password',
+        name: 'reset-password',
+        builder: (context, state) => const ResetPasswordScreen(),
+      ),
+      GoRoute(
         path: '/home',
         name: 'home',
         builder: (context, state) => const HomeScreen(),
@@ -50,6 +63,14 @@ class AppRouter {
         path: '/profile',
         name: 'profile',
         builder: (context, state) => const UserProfileScreen(),
+      ),
+      GoRoute(
+        path: '/room/:id',
+        name: 'room-details',
+        builder: (context, state) {
+          final roomId = state.pathParameters['id']!;
+          return RoomDetailsScreen(roomId: roomId);
+        },
       ),
     ],
   );
