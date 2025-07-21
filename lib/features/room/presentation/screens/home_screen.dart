@@ -56,7 +56,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const Text('Mis lugares'),
             if (profile != null)
               Text(
-                profile.displayName ?? 'Usuario',
+                profile.displayName,
                 style: Theme.of(context).textTheme.labelMedium,
               ),
           ],
