@@ -71,4 +71,8 @@ class RoomFirestoreDatasource {
           .toList();
     });
   }
+
+  Future<void> updateRoomOrder(String roomId, int newOrder) async {
+    await _roomsRef.doc(roomId).update({'order': newOrder});
+  }
 }

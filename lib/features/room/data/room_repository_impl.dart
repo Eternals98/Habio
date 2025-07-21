@@ -18,8 +18,21 @@ class RoomRepositoryImpl implements RoomRepository {
   }
 
   @override
+  Future<void> updateRoomOrder(String roomId, int newOrder) {
+    return datasource.updateRoomOrder(roomId, newOrder);
+  }
+
+  @override
   Future<Room> createRoom(String name, String ownerId) async {
     final newDocId = FirebaseFirestore.instance.collection('rooms').doc().id;
+
+    // 🔢 Obtener rooms existentes para calcular el siguiente "order"
+    final userRooms = await datasource.getUserRooms(ownerId);
+    final maxOrder = userRooms
+        .map((r) => r.order)
+        .fold<int>(0, (prev, o) => o > prev ? o : prev);
+
+        
     final model = RoomModel(
       id: newDocId,
       name: name,
@@ -27,6 +40,9 @@ class RoomRepositoryImpl implements RoomRepository {
       members: [],
       shared: false,
       createdAt: DateTime.now(),
+      order:
+          maxOrder +
+          1, // Asumiendo que maxOrder es una variable que contiene el orden máximo actual
     );
 
     final saved = await datasource.createRoom(model);
