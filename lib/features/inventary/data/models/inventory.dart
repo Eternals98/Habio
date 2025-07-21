@@ -1,4 +1,4 @@
-import 'package:per_habit/features/inventary/model/items.dart';
+import 'package:per_habit/features/inventary/data/models/items.dart';
 
 class Inventario {
   List<Mascota> mascotas;

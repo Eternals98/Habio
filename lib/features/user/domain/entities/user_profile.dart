@@ -1,4 +1,4 @@
-import 'package:per_habit/features/inventary/model/inventory.dart';
+import 'package:per_habit/features/inventary/data/models/inventory.dart';
 
 class UserProfile {
   final String id;
