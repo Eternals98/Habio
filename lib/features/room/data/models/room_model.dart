@@ -7,6 +7,7 @@ class RoomModel {
   final List<String> members;
   final bool shared;
   final DateTime createdAt;
+  final int order;
 
   const RoomModel({
     required this.id,
@@ -15,6 +16,7 @@ class RoomModel {
     required this.members,
     required this.shared,
     required this.createdAt,
+    required this.order,
   });
 
   factory RoomModel.fromMap(Map<String, dynamic> map, String id) {
@@ -25,6 +27,7 @@ class RoomModel {
       members: List<String>.from(map['members'] ?? []),
       shared: map['shared'] ?? false,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
+      order: map['order'] ?? 0,
     );
   }
 
@@ -35,10 +38,16 @@ class RoomModel {
       'members': members,
       'shared': shared,
       'createdAt': Timestamp.fromDate(createdAt),
+      'order': order,
     };
   }
 
-  RoomModel copyWith({String? name, List<String>? members, bool? shared}) {
+  RoomModel copyWith({
+    String? name,
+    List<String>? members,
+    bool? shared,
+    int? order,
+  }) {
     return RoomModel(
       id: id,
       name: name ?? this.name,
@@ -46,6 +55,7 @@ class RoomModel {
       members: members ?? this.members,
       shared: shared ?? this.shared,
       createdAt: createdAt,
+      order: order ?? this.order,
     );
   }
 }

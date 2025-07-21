@@ -10,6 +10,7 @@ class RoomMapper {
       members: model.members,
       shared: model.shared,
       createdAt: model.createdAt,
+      order: model.order,
     );
   }
 
@@ -21,6 +22,7 @@ class RoomMapper {
       members: entity.members,
       shared: entity.shared,
       createdAt: entity.createdAt,
+      order: entity.order,
     );
   }
 }

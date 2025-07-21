@@ -5,6 +5,7 @@ import 'package:per_habit/features/room/application/get_room_by_id_use_case.dart
 import 'package:per_habit/features/room/application/get_user_rooms_use_case.dart';
 import 'package:per_habit/features/room/application/invite_member_use_case.dart';
 import 'package:per_habit/features/room/application/rename_room_use_case.dart';
+import 'package:per_habit/features/room/application/update_room_order_use_case.dart';
 import 'package:per_habit/features/room/domain/entities/room.dart';
 
 class RoomState {
@@ -25,6 +26,7 @@ class RoomController extends StateNotifier<RoomState> {
   final DeleteRoomUseCase deleteRoom;
   final InviteMemberUseCase inviteMember;
   final GetRoomByIdUseCase getRoomById;
+  final UpdateRoomOrderUseCase updateRoomOrder;
 
   RoomController({
     required this.getUserRooms,
@@ -33,6 +35,7 @@ class RoomController extends StateNotifier<RoomState> {
     required this.deleteRoom,
     required this.inviteMember,
     required this.getRoomById,
+    required this.updateRoomOrder,
   }) : super(const RoomState());
 
   Future<void> create(String name, String ownerId) async {
@@ -74,6 +77,19 @@ class RoomController extends StateNotifier<RoomState> {
       return await getRoomById(roomId);
     } catch (_) {
       return null;
+    }
+  }
+
+  Future<void> reorderRooms(List<Room> rooms) async {
+    try {
+      for (int i = 0; i < rooms.length; i++) {
+        final room = rooms[i];
+        if (room.order != i) {
+          await updateRoomOrder(roomId: room.id, order: i);
+        }
+      }
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
     }
   }
 }

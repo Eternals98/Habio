@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:per_habit/features/room/domain/entities/room.dart';
 import 'package:per_habit/features/room/presentation/widgets/room_card.dart';
+import 'package:reorderables/reorderables.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/features/room/presentation/controllers/room_providers.dart';
 
-class RoomCarousel extends StatelessWidget {
+class RoomCarousel extends ConsumerStatefulWidget {
   final List<Room> rooms;
   final int selectedIndex;
   final ValueChanged<int> onPageChanged;
@@ -22,20 +26,58 @@ class RoomCarousel extends StatelessWidget {
   });
 
   @override
+  ConsumerState<RoomCarousel> createState() => _RoomCarouselState();
+}
+
+class _RoomCarouselState extends ConsumerState<RoomCarousel> {
+  late List<Room> _orderedRooms;
+
+  @override
+  void initState() {
+    super.initState();
+    _orderedRooms = [...widget.rooms]; // Copia local para poder reordenar
+  }
+
+  @override
+  void didUpdateWidget(covariant RoomCarousel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rooms != widget.rooms) {
+      _orderedRooms = [...widget.rooms];
+    }
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      final item = _orderedRooms.removeAt(oldIndex);
+      _orderedRooms.insert(newIndex, item);
+      widget.onPageChanged(newIndex);
+    });
+
+    // Llamar al controller para guardar el orden
+    Future.microtask(() {
+      final controller = ref.read(roomControllerProvider.notifier);
+      controller.reorderRooms(_orderedRooms);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return PageView.builder(
-      itemCount: rooms.length,
-      controller: PageController(initialPage: selectedIndex),
-      onPageChanged: onPageChanged,
-      itemBuilder: (_, index) {
-        final room = rooms[index];
-        return RoomCard(
-          room: room,
-          onEdit: () => onEdit(room),
-          onDelete: () => onDelete(room),
-          onTap: () => onTap(room),
-        );
-      },
+    return ReorderableWrap(
+      spacing: 12,
+      runSpacing: 12,
+      padding: const EdgeInsets.all(16),
+      onReorder: _onReorder,
+      needsLongPressDraggable: false,
+      children:
+          _orderedRooms.map((room) {
+            return RoomCard(
+              key: ValueKey(room.id),
+              room: room,
+              onTap: () => widget.onTap(room),
+              onEdit: () => widget.onEdit(room),
+              onDelete: () => widget.onDelete(room),
+            );
+          }).toList(),
     );
   }
 }
