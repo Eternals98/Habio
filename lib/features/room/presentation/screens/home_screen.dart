@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
+// ignore: unused_import
+import 'package:per_habit/features/user/presentation/controllers/user_controller.dart';
 import 'package:per_habit/features/room/presentation/controllers/room_providers.dart';
 import 'package:per_habit/features/room/presentation/widgets/create_room_dialog.dart';
 import 'package:per_habit/features/room/presentation/widgets/room_carousel.dart';
+import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -16,6 +19,18 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    Future.microtask(() {
+      final uid = ref.read(authControllerProvider).user?.uid;
+      if (uid != null) {
+        ref.read(userControllerProvider.notifier).loadProfile(uid);
+      }
+    });
+  }
 
   Future<void> _createRoom() async {
     final user = ref.read(authControllerProvider).user;
@@ -31,10 +46,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final user = ref.watch(authControllerProvider).user;
     final roomsAsync = ref.watch(roomStreamProvider(user?.uid ?? ''));
+    final profile = ref.watch(userControllerProvider).profile;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Mis lugares'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Mis lugares'),
+            if (profile != null)
+              Text(
+                profile.displayName ?? 'Usuario',
+                style: Theme.of(context).textTheme.labelMedium,
+              ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),

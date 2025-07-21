@@ -15,8 +15,8 @@ class PersonalityModel {
 
   factory PersonalityModel.fromMap(String id, Map<String, dynamic> map) {
     return PersonalityModel(
-      id: id,
-      name: map['name'],
+      id: id.toString(),
+      name: map['name'].toString(),
       moodBoostRate: (map['moodBoostRate'] as num).toDouble(),
       rewardMultiplier: (map['rewardMultiplier'] as num).toDouble(),
     );

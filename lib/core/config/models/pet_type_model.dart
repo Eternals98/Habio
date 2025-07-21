@@ -29,9 +29,9 @@ class PetTypeModel {
 
   factory PetTypeModel.fromMap(String id, Map<String, dynamic> map) {
     return PetTypeModel(
-      id: id,
+      id: id.toString(),
       name: map['name'],
-      description: map['description'],
+      description: map['description'].toString(),
       image: map['image'],
       available: map['available'],
       price: map['price'],

@@ -19,10 +19,12 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   @override
   void initState() {
     super.initState();
-    final authUser = ref.read(authControllerProvider).user;
-    if (authUser != null) {
-      ref.read(userControllerProvider.notifier).loadProfile(authUser.uid);
-    }
+    Future.microtask(() {
+      final authUser = ref.read(authControllerProvider).user;
+      if (authUser != null) {
+        ref.read(userControllerProvider.notifier).loadProfile(authUser.uid);
+      }
+    });
   }
 
   @override

@@ -19,9 +19,9 @@ class StatusModel {
 
   factory StatusModel.fromMap(String id, Map<String, dynamic> map) {
     return StatusModel(
-      id: id,
+      id: id.toString(),
       name: map['name'],
-      description: map['description'],
+      description: map['description'].toString(),
       color: map['color'],
       type: map['type'] ?? 'core',
       minLife: map['minLife'],

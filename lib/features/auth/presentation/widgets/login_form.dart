@@ -107,8 +107,9 @@ class LoginForm extends ConsumerWidget {
             controller: passwordController,
             obscureText: true,
             validator: (value) {
-              if (value == null || value.isEmpty)
+              if (value == null || value.isEmpty) {
                 return 'Ingresa tu contraseña';
+              }
               if (value.length < 6) return 'Mínimo 6 caracteres';
               return null;
             },

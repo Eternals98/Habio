@@ -13,9 +13,9 @@ class MechanicModel {
 
   factory MechanicModel.fromMap(String id, Map<String, dynamic> map) {
     return MechanicModel(
-      id: id,
-      name: map['name'],
-      description: map['description'],
+      id: id.toString(),
+      name: map['name'].toString(),
+      description: map['description'].toString(),
     );
   }
 }
