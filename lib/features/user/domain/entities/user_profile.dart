@@ -1,17 +1,21 @@
+import 'package:per_habit/features/inventary/model/inventory.dart';
+
 class UserProfile {
   final String id;
-  final String email;
+  String email;
   final String displayName;
   final String bio;
   final String photoUrl;
   final bool onboardingCompleted;
+  Inventario inventario;
 
-  const UserProfile({
+  UserProfile({
     required this.id,
     required this.email,
     required this.displayName,
     required this.bio,
     required this.photoUrl,
     this.onboardingCompleted = false,
-  });
+    Inventario? inventario,
+  }) : inventario = inventario ?? Inventario();
 }

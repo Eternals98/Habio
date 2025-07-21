@@ -1,7 +1,7 @@
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 
 class UserProfileModel extends UserProfile {
-  const UserProfileModel({
+  UserProfileModel({
     required super.id,
     required super.email,
     required super.displayName,
