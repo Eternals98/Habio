@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import 'package:per_habit/core/routes/go_router_refresh.dart';
+import 'package:per_habit/features/inventary/presentation/screens/inventary_screen.dart';
+import 'package:per_habit/features/navigation/presentation/screens/navigation_shell.dart';
 import 'package:per_habit/features/room/presentation/screens/room_detail_screen.dart';
 
 import 'package:per_habit/features/splash/splash_screen.dart';
@@ -8,6 +10,7 @@ import 'package:per_habit/features/auth/presentation/screens/login_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/register_screen.dart';
 import 'package:per_habit/features/room/presentation/screens/home_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/reset_password_screen.dart';
+import 'package:per_habit/features/store/presentation/screens/store_screen.dart';
 import 'package:per_habit/features/user/presentation/screens/user_profile_screen.dart';
 
 class AppRouter {
@@ -57,12 +60,14 @@ class AppRouter {
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => NavigationShell(child: const HomeScreen()),
       ),
       GoRoute(
         path: '/profile',
         name: 'profile',
-        builder: (context, state) => const UserProfileScreen(),
+        builder:
+            (context, state) =>
+                NavigationShell(child: const UserProfileScreen()),
       ),
       GoRoute(
         path: '/room/:id',
@@ -71,6 +76,16 @@ class AppRouter {
           final roomId = state.pathParameters['id']!;
           return RoomDetailsScreen(roomId: roomId);
         },
+      ),
+      GoRoute(
+        path: '/store',
+        builder:
+            (context, state) => NavigationShell(child: const StoreScreen()),
+      ),
+      GoRoute(
+        path: '/inventary',
+        builder:
+            (context, state) => NavigationShell(child: const InventaryScreen()),
       ),
     ],
   );
