@@ -11,9 +11,9 @@ import 'package:per_habit/features/auth/presentation/screens/register_screen.dar
 import 'package:per_habit/features/room/presentation/screens/home_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:per_habit/features/store/presentation/screens/store_screen.dart';
+import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 import 'package:per_habit/features/user/presentation/screens/user_profile_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:per_habit/main.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -86,8 +86,8 @@ class AppRouter {
         builder:
             (context, state) => Consumer(
               builder: (context, ref, _) {
-                final userProfileAsync = ref.watch(userProfileProvider);
-                return userProfileAsync.when(
+                final userState = ref.watch(userControllerProvider);
+                return userState.when(
                   data: (userProfile) {
                     if (userProfile == null) {
                       return const LoginScreen();

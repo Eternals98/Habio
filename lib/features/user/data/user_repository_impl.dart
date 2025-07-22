@@ -4,20 +4,24 @@ import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 import 'package:per_habit/features/user/domain/repositories/user_repository.dart';
 
 class UserRepositoryImpl implements UserRepository {
-  final UserFirestoreDatasource _datasource; // ✅ Campo privado
+  final UserFirestoreDatasource _datasource;
 
-  UserRepositoryImpl(this._datasource); // ✅ Constructor
+  UserRepositoryImpl(this._datasource);
 
   @override
   Future<void> createUserProfile(UserProfile profile) {
     final model = UserProfileMapper.toModel(profile);
-    return _datasource.createUser(model); // ✅ Usar _datasource
+    return _datasource.createUser(model);
   }
 
   @override
-  Future<UserProfile> getUserProfile(String uid) async {
-    final model = await _datasource.getUser(uid);
-    return UserProfileMapper.fromModel(model);
+  Future<UserProfile?> getUserProfile(String uid) async {
+    try {
+      final model = await _datasource.getUser(uid);
+      return UserProfileMapper.fromModel(model!);
+    } catch (e) {
+      return null; // Devolver null si no se encuentra el perfil
+    }
   }
 
   @override

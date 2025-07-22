@@ -8,9 +8,9 @@ class UserFirestoreDatasource {
     await _usersRef.doc(user.id).set(user.toMap());
   }
 
-  Future<UserProfileModel> getUser(String uid) async {
+  Future<UserProfileModel?> getUser(String uid) async {
     final doc = await _usersRef.doc(uid).get();
-    if (!doc.exists) throw Exception('Usuario no encontrado');
+    if (!doc.exists) return null;
     return UserProfileModel.fromMap(doc.data()!, doc.id);
   }
 

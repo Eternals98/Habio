@@ -17,7 +17,7 @@ class UserProfile {
     required this.photoUrl,
     this.onboardingCompleted = false,
     Inventario? inventario,
-  }) : inventario = inventario ?? Inventario();
+  }) : inventario = inventario ?? Inventario(userId: id);
 
   UserProfile copyWith({
     String? id,

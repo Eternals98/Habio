@@ -1,124 +1,51 @@
-import 'package:per_habit/features/inventary/domain/entities/items.dart';
+class ItemModel {
+  final String id;
+  final String nombre;
+  final String descripcion;
+  final String icono;
+  final int cantidad;
 
-abstract class ItemModel extends Item {
-  ItemModel({required super.id, required super.nombre, super.cantidad});
+  ItemModel({
+    required this.id,
+    required this.nombre,
+    required this.descripcion,
+    required this.icono,
+    this.cantidad = 1,
+  });
 
-  factory ItemModel.fromMap(Map<String, dynamic> map, String type) {
-    switch (type) {
-      case 'mascota':
-        return MascotaModel.fromMap(map);
-      case 'alimento':
-        return AlimentoModel.fromMap(map);
-      case 'accesorio':
-        return AccesorioModel.fromMap(map);
-      case 'decoracion':
-        return DecoracionModel.fromMap(map);
-      case 'fondo':
-        return FondoModel.fromMap(map);
-      default:
-        throw Exception('Unknown item type: $type');
-    }
-  }
-
-  Map<String, dynamic> toMap();
-}
-
-class MascotaModel extends Mascota implements ItemModel {
-  MascotaModel({required super.id, required super.nombre, super.cantidad});
-
-  factory MascotaModel.fromMap(Map<String, dynamic> map) {
-    return MascotaModel(
+  factory ItemModel.fromMap(Map<String, dynamic> map) {
+    return ItemModel(
       id: map['id'] ?? '',
       nombre: map['nombre'] ?? '',
+      descripcion: map['descripcion'] ?? '',
+      icono: map['icono'] ?? '',
       cantidad: map['cantidad'] ?? 1,
     );
   }
 
-  @override
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'nombre': nombre,
-    'cantidad': cantidad,
-    'type': 'mascota',
-  };
-}
-
-class AlimentoModel extends Alimento implements ItemModel {
-  AlimentoModel({required super.id, required super.nombre, super.cantidad});
-
-  factory AlimentoModel.fromMap(Map<String, dynamic> map) {
-    return AlimentoModel(
-      id: map['id'] ?? '',
-      nombre: map['nombre'] ?? '',
-      cantidad: map['cantidad'] ?? 1,
-    );
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'descripcion': descripcion,
+      'icono': icono,
+      'cantidad': cantidad,
+    };
   }
 
-  @override
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'nombre': nombre,
-    'cantidad': cantidad,
-    'type': 'alimento',
-  };
-}
-
-class AccesorioModel extends Accesorio implements ItemModel {
-  AccesorioModel({required super.id, required super.nombre, super.cantidad});
-
-  factory AccesorioModel.fromMap(Map<String, dynamic> map) {
-    return AccesorioModel(
-      id: map['id'] ?? '',
-      nombre: map['nombre'] ?? '',
-      cantidad: map['cantidad'] ?? 1,
+  ItemModel copyWith({
+    String? id,
+    String? nombre,
+    String? descripcion,
+    String? icono,
+    int? cantidad,
+  }) {
+    return ItemModel(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      descripcion: descripcion ?? this.descripcion,
+      icono: icono ?? this.icono,
+      cantidad: cantidad ?? this.cantidad,
     );
   }
-
-  @override
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'nombre': nombre,
-    'cantidad': cantidad,
-    'type': 'accesorio',
-  };
-}
-
-class DecoracionModel extends Decoracion implements ItemModel {
-  DecoracionModel({required super.id, required super.nombre, super.cantidad});
-
-  factory DecoracionModel.fromMap(Map<String, dynamic> map) {
-    return DecoracionModel(
-      id: map['id'] ?? '',
-      nombre: map['nombre'] ?? '',
-      cantidad: map['cantidad'] ?? 1,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'nombre': nombre,
-    'cantidad': cantidad,
-    'type': 'decoracion',
-  };
-}
-
-class FondoModel extends Fondo implements ItemModel {
-  FondoModel({required super.id, required super.nombre, super.cantidad});
-
-  factory FondoModel.fromMap(Map<String, dynamic> map) {
-    return FondoModel(
-      id: map['id'] ?? '',
-      nombre: map['nombre'] ?? '',
-      cantidad: map['cantidad'] ?? 1,
-    );
-  }
-
-  @override
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'nombre': nombre,
-    'cantidad': cantidad,
-    'type': 'fondo',
-  };
 }
