@@ -1,8 +1,14 @@
-import 'package:per_habit/features/inventary/data/models/items_model.dart';
+import 'package:per_habit/features/inventary/data/models/accesorio_model.dart';
+import 'package:per_habit/features/inventary/data/models/alimento_model.dart';
+import 'package:per_habit/features/inventary/data/models/decoracion_model.dart';
+import 'package:per_habit/features/inventary/data/models/fondo_model.dart';
+import 'package:per_habit/features/inventary/data/models/mascota_model.dart';
 import 'package:per_habit/features/inventary/domain/entities/inventory.dart';
+import 'package:per_habit/features/inventary/domain/entities/items.dart';
 
 class InventarioModel extends Inventario {
   InventarioModel({
+    required super.userId,
     super.mascotas = const [],
     super.alimentos = const [],
     super.accesorios = const [],
@@ -12,6 +18,7 @@ class InventarioModel extends Inventario {
 
   factory InventarioModel.fromMap(Map<String, dynamic> map) {
     return InventarioModel(
+      userId: map['userId'] ?? '',
       mascotas:
           (map['mascotas'] as List<dynamic>?)
               ?.map((m) => MascotaModel.fromMap(m as Map<String, dynamic>))
@@ -42,6 +49,7 @@ class InventarioModel extends Inventario {
 
   Map<String, dynamic> toMap() {
     return {
+      'userId': userId,
       'mascotas': mascotas.map((m) => (m as MascotaModel).toMap()).toList(),
       'alimentos': alimentos.map((a) => (a as AlimentoModel).toMap()).toList(),
       'accesorios':
@@ -50,5 +58,23 @@ class InventarioModel extends Inventario {
           decoraciones.map((d) => (d as DecoracionModel).toMap()).toList(),
       'fondos': fondos.map((f) => (f as FondoModel).toMap()).toList(),
     };
+  }
+
+  InventarioModel copyWith({
+    String? userId,
+    List<Mascota>? mascotas,
+    List<Alimento>? alimentos,
+    List<Accesorio>? accesorios,
+    List<Decoracion>? decoraciones,
+    List<Fondo>? fondos,
+  }) {
+    return InventarioModel(
+      userId: userId ?? this.userId,
+      mascotas: mascotas ?? this.mascotas,
+      alimentos: alimentos ?? this.alimentos,
+      accesorios: accesorios ?? this.accesorios,
+      decoraciones: decoraciones ?? this.decoraciones,
+      fondos: fondos ?? this.fondos,
+    );
   }
 }

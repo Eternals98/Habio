@@ -1,11 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:per_habit/features/inventary/data/models/inventory_model.dart';
 import 'package:per_habit/features/inventary/data/models/items_model.dart';
-import 'package:per_habit/features/inventary/domain/entities/items.dart';
+import 'package:per_habit/features/inventary/data/models/mascota_model.dart';
+import 'package:per_habit/features/inventary/data/models/alimento_model.dart';
+import 'package:per_habit/features/inventary/data/models/accesorio_model.dart';
+import 'package:per_habit/features/inventary/data/models/decoracion_model.dart';
+import 'package:per_habit/features/inventary/data/models/fondo_model.dart';
 
 abstract class InventarioDatasource {
-  Future<void> createItem(Item item, String userId);
-  Future<void> updateItem(Item item, String userId);
+  Future<void> createItem(
+    ItemModel item,
+    String userId,
+  ); // Cambiado a ItemModel
+  Future<void> updateItem(
+    ItemModel item,
+    String userId,
+  ); // Cambiado a ItemModel
   Future<void> deleteItem(String itemId, String userId);
   Stream<InventarioModel> getInventoryByUser(String userId);
 }
@@ -16,13 +26,14 @@ class InventarioDatasourceImpl implements InventarioDatasource {
   InventarioDatasourceImpl(this.firestore);
 
   @override
-  Future<void> createItem(Item item, String userId) async {
+  Future<void> createItem(ItemModel item, String userId) async {
     final userDoc = firestore.collection('users').doc(userId);
     final docSnap = await userDoc.get();
     final data = docSnap.data() ?? {};
     final currentInventario = InventarioModel.fromMap(data['inventario'] ?? {});
 
     final updatedInventario = InventarioModel(
+      userId: userId,
       mascotas:
           item is MascotaModel
               ? [...currentInventario.mascotas, item]
@@ -51,13 +62,14 @@ class InventarioDatasourceImpl implements InventarioDatasource {
   }
 
   @override
-  Future<void> updateItem(Item item, String userId) async {
+  Future<void> updateItem(ItemModel item, String userId) async {
     final userDoc = firestore.collection('users').doc(userId);
     final docSnap = await userDoc.get();
     final data = docSnap.data() ?? {};
     final currentInventario = InventarioModel.fromMap(data['inventario'] ?? {});
 
     final updatedInventario = InventarioModel(
+      userId: userId,
       mascotas:
           item is MascotaModel
               ? currentInventario.mascotas
@@ -101,6 +113,7 @@ class InventarioDatasourceImpl implements InventarioDatasource {
     final currentInventario = InventarioModel.fromMap(data['inventario'] ?? {});
 
     final updatedInventario = InventarioModel(
+      userId: userId,
       mascotas:
           currentInventario.mascotas.where((m) => m.id != itemId).toList(),
       alimentos:
@@ -119,7 +132,9 @@ class InventarioDatasourceImpl implements InventarioDatasource {
   Stream<InventarioModel> getInventoryByUser(String userId) {
     return firestore.collection('users').doc(userId).snapshots().map((snap) {
       final data = snap.data() ?? {};
-      return InventarioModel.fromMap(data['inventario'] ?? {});
+      final inventarioMap = data['inventario'] ?? {};
+      final model = InventarioModel.fromMap(inventarioMap);
+      return model.copyWith(userId: userId);
     });
   }
 }
