@@ -5,6 +5,7 @@ class Room {
   final List<String> members;
   final DateTime createdAt;
   final bool shared;
+  final int order;
 
   const Room({
     required this.id,
@@ -13,9 +14,15 @@ class Room {
     required this.members,
     required this.createdAt,
     required this.shared,
+    required this.order,
   });
 
-  Room copyWith({String? name, List<String>? members, bool? shared}) {
+  Room copyWith({
+    String? name,
+    List<String>? members,
+    bool? shared,
+    int? order,
+  }) {
     return Room(
       id: id,
       name: name ?? this.name,
@@ -23,6 +30,7 @@ class Room {
       members: members ?? this.members,
       createdAt: createdAt,
       shared: shared ?? this.shared,
+      order: order ?? this.order,
     );
   }
 

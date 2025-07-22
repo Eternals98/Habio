@@ -8,4 +8,5 @@ abstract class RoomRepository {
   Future<Room> inviteMember(String roomId, String email);
   Future<Room> getRoomById(String roomId);
   Stream<List<Room>> watchUserRooms(String userId);
+  Future<void> updateRoomOrder(String roomId, int newOrder);
 }

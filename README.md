@@ -9,6 +9,7 @@
 ## 🚀 Key Concepts
 
 ### 🧩 Rooms
+
 Habit spaces organized by themes (e.g. Fitness, Learning, Wellness), each with its own:
 
 - Pet companion
@@ -17,6 +18,7 @@ Habit spaces organized by themes (e.g. Fitness, Learning, Wellness), each with i
 - Social sharing
 
 ### 🐶 Pets
+
 Each pet is unique and tied to a specific room. Pets have:
 
 - **Personalities** (e.g. shy, active, curious)
@@ -25,9 +27,11 @@ Each pet is unique and tied to a specific room. Pets have:
 - **Mechanics**: pets evolve, get energized, or become moody based on your habit consistency
 
 ### 🧠 Feelings & Emotions
+
 Pets show emotional feedback depending on your habit activity. Their behavior motivates you to keep your streaks alive.
 
 ### 👥 Social & Competitive
+
 - Share rooms with friends
 - Compete in **habit challenges**
 - Track your group streaks
@@ -37,12 +41,12 @@ Pets show emotional feedback depending on your habit activity. Their behavior mo
 
 ## 🎮 Game Mechanics
 
-| Feature           | Description                                               |
-|------------------|-----------------------------------------------------------|
-| 🌀 **Roulette**   | Daily or weekly roulette mini-game to win rewards         |
-| 🎯 **Challenges** | Complete group or solo challenges to level up pets        |
+| Feature             | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| 🌀 **Roulette**     | Daily or weekly roulette mini-game to win rewards               |
+| 🎯 **Challenges**   | Complete group or solo challenges to level up pets              |
 | 🪙 **Point System** | Earn points for each habit completed, unlock items and new pets |
-| 🧬 **Evolution**  | Pets change visually and gain traits as you progress      |
+| 🧬 **Evolution**    | Pets change visually and gain traits as you progress            |
 
 ---
 
@@ -68,6 +72,57 @@ Pets show emotional feedback depending on your habit activity. Their behavior mo
 flutter pub get
 flutter run
 ```
+
+---
+
+## 🧱 Feature Template (Mason Brick)
+
+To quickly generate a new feature structure (e.g. `habit`, `room`, `pet`) using Mason:
+
+### Step 1: Install Mason CLI (only once)
+
+```bash
+dart pub global activate mason_cli
+```
+
+Make sure to add Mason to your path if it's not available as a global command.
+
+### Step 2: Get bricks (only once per clone)
+
+From the root of the project:
+
+```bash
+mason get
+```
+
+### Step 3: Generate a feature
+
+```bash
+mason make feature_brick -o lib/features/
+```
+
+When prompted:
+
+```
+? feature_name: habit
+```
+
+This will generate:
+
+```
+lib/features/habit/
+├── domain/
+├── data/
+├── application/
+└── presentation/
+```
+
+With boilerplate Dart files already filled in.
+
+> 📦 The brick is located at `bricks/feature_brick/` and defined in `mason.yaml`.
+
+---
+
 ## 🔒 License
 
 This project is **proprietary software**.
@@ -75,4 +130,3 @@ This project is **proprietary software**.
 © 2025 **Javier Gómez**. All rights reserved.
 
 No part of this codebase may be copied, distributed, modified, or used in any form without explicit written permission from the author.
-
