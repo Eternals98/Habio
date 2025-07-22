@@ -1,3 +1,4 @@
+import 'package:per_habit/features/inventary/data/models/inventory_model.dart';
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 
 class UserProfileModel extends UserProfile {
@@ -8,6 +9,7 @@ class UserProfileModel extends UserProfile {
     required super.bio,
     required super.photoUrl,
     super.onboardingCompleted = false,
+    super.inventario,
   });
 
   factory UserProfileModel.fromMap(Map<String, dynamic> map, String id) {
@@ -18,6 +20,7 @@ class UserProfileModel extends UserProfile {
       bio: map['bio'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       onboardingCompleted: map['onboardingCompleted'] ?? false,
+      inventario: InventarioModel.fromMap(map['inventario'] ?? {}),
     );
   }
 
@@ -28,6 +31,7 @@ class UserProfileModel extends UserProfile {
       'bio': bio,
       'photoUrl': photoUrl,
       'onboardingCompleted': onboardingCompleted,
+      'inventario': (inventario as InventarioModel).toMap(),
     };
   }
 }
