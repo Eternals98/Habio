@@ -5,6 +5,7 @@ import 'package:per_habit/features/auth/application/reset_password_use_case.dart
 import 'package:per_habit/features/auth/data/auth_repository_impl.dart';
 import 'package:per_habit/features/auth/data/datasources/firebase_auth_datasource.dart';
 import 'package:per_habit/features/auth/domain/repositories/auth_repository.dart';
+import 'package:per_habit/features/user/application/get_user_profile_use_case.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 
 import 'auth_controller.dart';
@@ -39,6 +40,10 @@ final resetPasswordUseCaseProvider = Provider<ResetPasswordUseCase>((ref) {
   return ResetPasswordUseCase(repository);
 });
 
+final getUserProfileUseCaseProvider = Provider<GetUserProfileUseCase>((ref) {
+  return GetUserProfileUseCase(ref.read(userRepositoryProvider));
+});
+
 /// StateNotifierProvider del AuthController
 final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
   (ref) {
@@ -47,6 +52,7 @@ final authControllerProvider = StateNotifierProvider<AuthController, AuthState>(
       registerUseCase: ref.watch(registerUseCaseProvider),
       resetPasswordUseCase: ref.watch(resetPasswordUseCaseProvider),
       repository: ref.watch(authRepositoryProvider),
+      getUserProfileUseCase: ref.watch(getUserProfileUseCaseProvider),
     );
   },
 );

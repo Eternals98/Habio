@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/features/room/domain/entities/room.dart';
-import 'package:per_habit/features/room/presentation/widgets/room_card.dart';
-import 'package:reorderables/reorderables.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/features/room/domain/entities/room.dart';
 import 'package:per_habit/features/room/presentation/controllers/room_providers.dart';
+import 'package:per_habit/features/room/presentation/widgets/room_canvas.dart'; // ✅ Nuevo widget
+import 'package:reorderables/reorderables.dart';
 
 class RoomCarousel extends ConsumerStatefulWidget {
   final List<Room> rooms;
@@ -52,7 +52,7 @@ class _RoomCarouselState extends ConsumerState<RoomCarousel> {
       widget.onPageChanged(newIndex);
     });
 
-    // Llamar al controller para guardar el orden
+    // Guardar el nuevo orden
     Future.microtask(() {
       final controller = ref.read(roomControllerProvider.notifier);
       controller.reorderRooms(_orderedRooms);
@@ -69,7 +69,7 @@ class _RoomCarouselState extends ConsumerState<RoomCarousel> {
       needsLongPressDraggable: false,
       children:
           _orderedRooms.map((room) {
-            return RoomCard(
+            return RoomCanvas(
               key: ValueKey(room.id),
               room: room,
               onTap: () => widget.onTap(room),

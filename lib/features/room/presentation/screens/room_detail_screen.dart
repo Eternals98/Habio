@@ -38,7 +38,7 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
         .read(roomControllerProvider.notifier)
         .getRoomById(widget.roomId);
     setState(() => _room = room);
-  }
+    }
 
   void _onAddHabit() {
     Navigator.of(context).push(

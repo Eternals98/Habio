@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:per_habit/core/theme/app_colors.dart';
 import 'package:per_habit/features/room/domain/entities/room.dart';
 
 class RoomCard extends StatelessWidget {
@@ -27,83 +26,65 @@ class RoomCard extends StatelessWidget {
           builder: (_) => _RoomOptions(onEdit: onEdit, onDelete: onDelete),
         );
       },
-      child: Container(
-        width: 180,
-        height: 180,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 6,
-              offset: Offset(2, 4),
-            ),
-          ],
-        ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: AppColors.secondaryBackground,
-                alignment: Alignment.center,
-                child: SvgPicture.asset(
-                  'assets/images/room_icons/room_base.svg',
-                  width: 72,
-                  height: 72,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // 📦 Imagen SVG como fondo principal
+          SvgPicture.asset(
+            'assets/images/room_icons/room_base.svg',
+            width: 180,
+            height: 180,
+            fit: BoxFit.contain,
+          ),
+
+          // 🧷 Nombre pegado a la pared izquierda (rotado)
+          Positioned(
+            top: 34,
+            left: 26,
+            child: Transform.rotate(
+              angle: -0.45, // Rota ligeramente hacia la izquierda
+              child: Text(
+                room.name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w300,
+                  fontSize: 12,
+                  shadows: [Shadow(color: Colors.black87, blurRadius: 3)],
                 ),
               ),
             ),
-            Positioned(
-              bottom: 0,
-              child: Container(
-                width: 180,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(127),
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(20),
+          ),
+
+          // 🧷 Estado en la pared derecha (rotado hacia otro lado)
+          Positioned(
+            top: 38,
+            right: 10,
+            child: Transform.rotate(
+              angle: 0.40,
+              child: Row(
+                children: [
+                  Icon(
+                    room.shared ? Icons.groups : Icons.lock_outline,
+                    size: 14,
+                    color: Colors.white,
+                    shadows: const [
+                      Shadow(color: Colors.black45, blurRadius: 2),
+                    ],
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      room.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      textAlign: TextAlign.center,
+                  const SizedBox(width: 4),
+                  Text(
+                    room.shared ? 'Compartido' : 'Privado',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      shadows: [Shadow(color: Colors.black45, blurRadius: 2)],
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          room.shared ? Icons.groups : Icons.lock_outline,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          room.shared ? 'Compartido' : 'Privado',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

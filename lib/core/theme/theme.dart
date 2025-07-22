@@ -1,56 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:per_habit/core/theme/app_colors.dart'; // Asegúrate de tener esta ruta
+import 'package:google_fonts/google_fonts.dart';
+import 'app_colors.dart';
 
-final ThemeData appTheme = ThemeData(
-  useMaterial3: true,
-  brightness: Brightness.light,
-  primaryColor: AppColors.primary,
-  scaffoldBackgroundColor: AppColors.primaryBackground,
-  fontFamily: 'Poppins', // o la fuente emocional que uses
+class AppTheme {
+  static ThemeData get light {
+    return ThemeData(
+      scaffoldBackgroundColor: AppColors.primaryBackground,
+      useMaterial3: true,
+      colorScheme: ColorScheme.light(
+        primary: AppColors.primary,
+        secondary: AppColors.secondary,
+        surface: AppColors.primaryBackground,
+        error: AppColors.error,
+      ),
+      textTheme: _textTheme,
+      elevatedButtonTheme: _elevatedButtonTheme,
+      textButtonTheme: _textButtonTheme,
+      inputDecorationTheme: _inputDecorationTheme,
+      appBarTheme: _appBarTheme,
+    );
+  }
 
-  textTheme: const TextTheme(
-    displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-    titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-    bodyMedium: TextStyle(fontSize: 16),
-    labelLarge: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-  ),
+  // Tipografías
+  static TextTheme get _textTheme => GoogleFonts.poppinsTextTheme().copyWith(
+    bodyLarge: const TextStyle(fontSize: 16, color: AppColors.primaryText),
+    bodyMedium: const TextStyle(fontSize: 14, color: AppColors.primaryText),
+    labelLarge: const TextStyle(fontSize: 14, color: AppColors.secondaryText),
+    titleLarge: const TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: AppColors.primaryText,
+    ),
+  );
 
-  colorScheme: ColorScheme.light(
-    primary: AppColors.primary,
-    secondary: AppColors.secondary,
-    error: AppColors.error,
-    surface: AppColors.primaryBackground, // ← usado en Scaffold, Cards, etc.
-    onPrimary: AppColors.primaryText,
-    onSecondary: AppColors.secondaryText,
-    onError: Colors.white,
-    onSurface: AppColors.primaryText,
-  ),
+  // Botones elevados
+  static ElevatedButtonThemeData get _elevatedButtonTheme =>
+      ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      );
 
-  appBarTheme: const AppBarTheme(
-    backgroundColor: Colors.white,
+  // Botones de texto
+  static TextButtonThemeData get _textButtonTheme => TextButtonThemeData(
+    style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+  );
+
+  // TextFields
+  static InputDecorationTheme get _inputDecorationTheme => InputDecorationTheme(
+    filled: true,
+    fillColor: Colors.white,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+  );
+
+  // AppBar
+  static AppBarTheme get _appBarTheme => const AppBarTheme(
+    backgroundColor: AppColors.primaryBackground,
+    foregroundColor: AppColors.primaryText,
     elevation: 0,
-    centerTitle: true,
-    iconTheme: IconThemeData(color: Colors.black),
     titleTextStyle: TextStyle(
-      color: Colors.black,
-      fontWeight: FontWeight.w600,
-      fontSize: 18,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      color: AppColors.primaryText,
     ),
-  ),
-
-  elevatedButtonTheme: ElevatedButtonThemeData(
-    style: ElevatedButton.styleFrom(
-      backgroundColor: AppColors.primary,
-      foregroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-    ),
-  ),
-
-  cardTheme: CardThemeData(
-    elevation: 3,
-    shadowColor: Colors.black12,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    color: AppColors.secondaryBackground,
-  ),
-);
+  );
+}
