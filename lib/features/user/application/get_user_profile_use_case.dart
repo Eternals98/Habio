@@ -7,7 +7,7 @@ class GetUserProfileUseCase {
 
   GetUserProfileUseCase(this.repository);
 
-  Future<UserProfile> call(String uid) {
+  Future<UserProfile?> call(String uid) {
     return repository.getUserProfile(uid);
   }
 }

@@ -2,33 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:per_habit/features/user/application/get_user_profile_use_case.dart';
 import 'package:per_habit/features/user/application/update_user_profile_use_case.dart';
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 /// Estado del perfil de usuario
-class UserState {
-  final bool loading;
-  final UserProfile? profile;
-  final String? error;
+typedef UserState = AsyncValue<UserProfile?>;
 
-  const UserState({
-    this.loading = false,
-    this.profile,
-    this.error,
-  });
-
-  UserState copyWith({
-    bool? loading,
-    UserProfile? profile,
-    String? error,
-  }) {
-    return UserState(
-      loading: loading ?? this.loading,
-      profile: profile ?? this.profile,
-      error: error,
-    );
-  }
-}
-
-/// Controlador para manejar estado y acciones del perfil de usuario
 class UserController extends StateNotifier<UserState> {
   final GetUserProfileUseCase getUserProfile;
   final UpdateUserProfileUseCase updateUserProfile;
@@ -36,25 +14,31 @@ class UserController extends StateNotifier<UserState> {
   UserController({
     required this.getUserProfile,
     required this.updateUserProfile,
-  }) : super(const UserState());
+  }) : super(const AsyncValue.loading()) {
+    _loadProfile();
+  }
 
-  Future<void> loadProfile(String uid) async {
-    state = state.copyWith(loading: true, error: null);
+  Future<void> _loadProfile() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      state = const AsyncValue.data(null);
+      return;
+    }
     try {
-      final profile = await getUserProfile(uid);
-      state = state.copyWith(loading: false, profile: profile);
-    } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
+      final profile = await getUserProfile(user.uid);
+      state = AsyncValue.data(profile);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 
   Future<void> updateProfile(UserProfile newProfile) async {
-    state = state.copyWith(loading: true, error: null);
+    state = const AsyncValue.loading();
     try {
       await updateUserProfile(newProfile);
-      state = state.copyWith(loading: false, profile: newProfile);
-    } catch (e) {
-      state = state.copyWith(loading: false, error: e.toString());
+      state = AsyncValue.data(newProfile);
+    } catch (e, stackTrace) {
+      state = AsyncValue.error(e, stackTrace);
     }
   }
 }
