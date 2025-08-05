@@ -8,6 +8,7 @@ class UserProfileModel extends UserProfile {
     required super.displayName,
     required super.bio,
     required super.photoUrl,
+    required super.habipoints,
     super.onboardingCompleted = false,
     super.inventario,
   });
@@ -20,6 +21,7 @@ class UserProfileModel extends UserProfile {
       bio: map['bio'] ?? '',
       photoUrl: map['photoUrl'] ?? '',
       onboardingCompleted: map['onboardingCompleted'] ?? false,
+      habipoints: map['habipoints'] ?? 0,
       inventario: InventarioModel.fromMap(map['inventario'] ?? {}),
     );
   }
@@ -31,6 +33,7 @@ class UserProfileModel extends UserProfile {
       'bio': bio,
       'photoUrl': photoUrl,
       'onboardingCompleted': onboardingCompleted,
+      'habipoints': habipoints,
       'inventario': (inventario as InventarioModel).toMap(),
     };
   }
