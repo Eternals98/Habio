@@ -23,6 +23,7 @@ final userProfileProvider = StreamProvider<UserProfile?>((ref) {
       bio: '',
       photoUrl: user.photoURL ?? '',
       inventario: Inventario(userId: 'default_user_id'),
+      habipoints: user.habitPoints ?? 0,
     );
   });
 });
