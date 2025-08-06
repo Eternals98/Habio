@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
+import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 import 'package:per_habit/features/user/presentation/widgets/user_profile_form.dart';
 
@@ -22,7 +23,10 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Perfil de usuario')),
+      appBar: AppBar(
+        title: const Text('Perfil de usuario'),
+        actions: const [AppBarActions()],
+      ),
       body: userState.when(
         data:
             (profile) =>

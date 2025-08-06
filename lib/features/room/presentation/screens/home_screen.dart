@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
+import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/room/presentation/controllers/room_providers.dart';
 import 'package:per_habit/features/room/presentation/widgets/create_room_dialog.dart';
 import 'package:per_habit/features/room/presentation/widgets/room_carousel.dart';
@@ -52,19 +53,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              ref.read(authControllerProvider.notifier).logout();
-              context.go('/login');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () => context.push('/profile'),
-          ),
-        ],
+        actions: const [AppBarActions()],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createRoom,

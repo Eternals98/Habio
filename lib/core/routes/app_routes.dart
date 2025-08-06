@@ -10,7 +10,7 @@ import 'package:per_habit/features/auth/presentation/screens/login_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/register_screen.dart';
 import 'package:per_habit/features/room/presentation/screens/home_screen.dart';
 import 'package:per_habit/features/auth/presentation/screens/reset_password_screen.dart';
-import 'package:per_habit/features/store/presentation/screens/store_screen.dart';
+import 'package:per_habit/features/store/presentation/screens/shop_screen.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
 import 'package:per_habit/features/user/presentation/screens/user_profile_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,8 +78,7 @@ class AppRouter {
       ),
       GoRoute(
         path: '/store',
-        builder:
-            (context, state) => NavigationShell(child: const StoreScreen()),
+        builder: (context, state) => NavigationShell(child: const ShopScreen()),
       ),
       GoRoute(
         path: '/inventary',

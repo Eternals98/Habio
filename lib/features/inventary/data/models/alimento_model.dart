@@ -8,6 +8,7 @@ class AlimentoModel extends ItemModel implements Alimento {
     required super.descripcion,
     required super.icono,
     super.cantidad,
+    required super.category,
   });
 
   factory AlimentoModel.fromMap(Map<String, dynamic> map) {
@@ -17,9 +18,11 @@ class AlimentoModel extends ItemModel implements Alimento {
       descripcion: map['descripcion'] ?? '',
       icono: map['icono'] ?? '',
       cantidad: map['cantidad'] ?? 1,
+      category: map['category'] ?? 'unknown',
     );
   }
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -27,6 +30,7 @@ class AlimentoModel extends ItemModel implements Alimento {
       'descripcion': descripcion,
       'icono': icono,
       'cantidad': cantidad,
+      'category': category,
     };
   }
 }

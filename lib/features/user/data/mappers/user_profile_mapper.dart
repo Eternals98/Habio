@@ -10,6 +10,7 @@ class UserProfileMapper {
       bio: model.bio,
       photoUrl: model.photoUrl,
       onboardingCompleted: model.onboardingCompleted,
+      habipoints: model.habipoints,
     );
   }
 
@@ -21,6 +22,7 @@ class UserProfileMapper {
       bio: entity.bio,
       photoUrl: entity.photoUrl,
       onboardingCompleted: entity.onboardingCompleted,
+      habipoints: entity.habipoints,
     );
   }
 }

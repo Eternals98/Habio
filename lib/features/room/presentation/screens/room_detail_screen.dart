@@ -9,6 +9,7 @@ import 'package:per_habit/features/habit/presentation/controllers/habit_provider
 import 'package:per_habit/features/habit/presentation/screens/create_habit_screen.dart';
 import 'package:per_habit/features/habit/presentation/screens/edit_habit_screen.dart';
 import 'package:per_habit/features/habit/presentation/widgets/pet_habit_canvas.dart';
+import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/room/domain/entities/room.dart';
 // ignore: unused_import
 import 'package:per_habit/features/room/presentation/controllers/room_controller.dart';
@@ -223,6 +224,7 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
       appBar: AppBar(
         title: Text(_room?.name ?? 'Room'),
         actions: [
+          AppBarActions(),
           IconButton(
             icon: const Icon(Icons.person_add),
             tooltip: 'Invitar miembro',

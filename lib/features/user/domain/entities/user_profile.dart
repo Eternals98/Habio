@@ -8,6 +8,7 @@ class UserProfile {
   final String photoUrl;
   final bool onboardingCompleted;
   final Inventario inventario;
+  final int habipoints;
 
   UserProfile({
     required this.id,
@@ -17,6 +18,7 @@ class UserProfile {
     required this.photoUrl,
     this.onboardingCompleted = false,
     Inventario? inventario,
+    required this.habipoints,
   }) : inventario = inventario ?? Inventario(userId: id);
 
   UserProfile copyWith({
@@ -26,6 +28,7 @@ class UserProfile {
     String? bio,
     String? photoUrl,
     bool? onboardingCompleted,
+    int? habipoints,
     Inventario? inventario,
   }) {
     return UserProfile(
@@ -35,6 +38,7 @@ class UserProfile {
       bio: bio ?? this.bio,
       photoUrl: photoUrl ?? this.photoUrl,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      habipoints: habipoints ?? this.habipoints,
       inventario: inventario ?? this.inventario,
     );
   }
