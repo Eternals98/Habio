@@ -50,6 +50,7 @@ class UserProfileForm extends ConsumerWidget {
                 bio: profile.bio,
                 photoUrl: avatarController.text.trim(),
                 onboardingCompleted: profile.onboardingCompleted,
+                habipoints: profile.habipoints,
               );
 
               ref.read(userControllerProvider.notifier).updateProfile(updated);

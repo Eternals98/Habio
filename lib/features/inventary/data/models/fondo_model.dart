@@ -8,6 +8,7 @@ class FondoModel extends ItemModel implements Fondo {
     required super.descripcion,
     required super.icono,
     super.cantidad,
+    required super.category,
   });
 
   factory FondoModel.fromMap(Map<String, dynamic> map) {
@@ -17,9 +18,11 @@ class FondoModel extends ItemModel implements Fondo {
       descripcion: map['descripcion'] ?? '',
       icono: map['icono'] ?? '',
       cantidad: map['cantidad'] ?? 1,
+      category: map['category'] ?? 'unknown',
     );
   }
 
+  @override
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -27,6 +30,7 @@ class FondoModel extends ItemModel implements Fondo {
       'descripcion': descripcion,
       'icono': icono,
       'cantidad': cantidad,
+      'category': category,
     };
   }
 }

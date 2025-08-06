@@ -28,6 +28,7 @@ class RegisterUseCase {
       bio: '',
       photoUrl: '',
       onboardingCompleted: false,
+      habipoints: 0,
     );
 
     await userRepository.createUserProfile(userProfile);

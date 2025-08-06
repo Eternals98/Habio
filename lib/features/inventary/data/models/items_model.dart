@@ -4,6 +4,7 @@ class ItemModel {
   final String descripcion;
   final String icono;
   final int cantidad;
+  final String category;
 
   ItemModel({
     required this.id,
@@ -11,6 +12,7 @@ class ItemModel {
     required this.descripcion,
     required this.icono,
     this.cantidad = 1,
+    required this.category,
   });
 
   factory ItemModel.fromMap(Map<String, dynamic> map) {
@@ -20,6 +22,7 @@ class ItemModel {
       descripcion: map['descripcion'] ?? '',
       icono: map['icono'] ?? '',
       cantidad: map['cantidad'] ?? 1,
+      category: map['category'] ?? 'unknown',
     );
   }
 
@@ -30,6 +33,7 @@ class ItemModel {
       'descripcion': descripcion,
       'icono': icono,
       'cantidad': cantidad,
+      'category': category,
     };
   }
 
@@ -39,6 +43,7 @@ class ItemModel {
     String? descripcion,
     String? icono,
     int? cantidad,
+    String? category,
   }) {
     return ItemModel(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class ItemModel {
       descripcion: descripcion ?? this.descripcion,
       icono: icono ?? this.icono,
       cantidad: cantidad ?? this.cantidad,
+      category: category ?? this.category,
     );
   }
 }

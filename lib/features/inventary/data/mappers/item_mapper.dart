@@ -63,6 +63,7 @@ class ItemMapper {
         descripcion: entity.descripcion,
         icono: entity.icono,
         cantidad: entity.cantidad,
+        category: 'mascota', // Infer category from entity type
       );
     } else if (entity is Alimento) {
       return AlimentoModel(
@@ -71,6 +72,7 @@ class ItemMapper {
         descripcion: entity.descripcion,
         icono: entity.icono,
         cantidad: entity.cantidad,
+        category: 'alimento',
       );
     } else if (entity is Accesorio) {
       return AccesorioModel(
@@ -79,6 +81,7 @@ class ItemMapper {
         descripcion: entity.descripcion,
         icono: entity.icono,
         cantidad: entity.cantidad,
+        category: 'accesorio',
       );
     } else if (entity is Decoracion) {
       return DecoracionModel(
@@ -87,6 +90,7 @@ class ItemMapper {
         descripcion: entity.descripcion,
         icono: entity.icono,
         cantidad: entity.cantidad,
+        category: 'decoracion',
       );
     } else if (entity is Fondo) {
       return FondoModel(
@@ -95,6 +99,7 @@ class ItemMapper {
         descripcion: entity.descripcion,
         icono: entity.icono,
         cantidad: entity.cantidad,
+        category: 'fondo',
       );
     } else {
       throw Exception('Unknown Item entity type');
