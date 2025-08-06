@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/inventary/domain/entities/inventory.dart';
 import 'package:per_habit/features/inventary/presentation/widgets/item_list.dart';
+import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 
 class InventaryScreen extends StatefulWidget {
   final Inventario inventario;
@@ -17,7 +18,10 @@ class _InventaryScreenState extends State<InventaryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Inventario')),
+      appBar: AppBar(
+        title: const Text('Inventario'),
+        actions: [AppBarActions()],
+      ),
       body: Column(
         children: [
           _buildCategoryButtons(),

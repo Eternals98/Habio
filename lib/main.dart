@@ -1,6 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 // ignore: unused_import
@@ -13,50 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// 🌱 App real con GoRouter y lógica de autenticación
 import 'package:per_habit/core/routes/app_routes.dart';
 
-Future<void> populateShopItems() async {
-  final firestore = FirebaseFirestore.instance;
-
-  await firestore.collection('shop').doc('item1').set({
-    'id': 'item1',
-    'name': 'Golden Cat',
-    'description': 'A shiny cat pet',
-    'icono': '🐱',
-    'price': 150,
-    'isOffer': false,
-    'isBundle': false,
-    'content': [
-      {
-        'id': 'item1',
-        'nombre': 'Golden Cat',
-        'descripcion': 'A shiny cat pet',
-        'icono': '🐱',
-        'category': 'mascota',
-        'cantidad': 1,
-      },
-    ],
-  });
-
-  await firestore.collection('shop').doc('item2').set({
-    'id': 'item2',
-    'name': 'Forest Background',
-    'description': 'A lush forest scene',
-    'icono': '🌳',
-    'price': 200,
-    'isOffer': true,
-    'isBundle': false,
-    'content': [
-      {
-        'id': 'item2',
-        'nombre': 'Forest Background',
-        'descripcion': 'A lush forest scene',
-        'icono': '🌳',
-        'category': 'fondo',
-        'cantidad': 1,
-      },
-    ],
-  });
-}
-
 final userProfileProvider = StreamProvider<UserProfile?>((ref) {
   return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
     if (user == null) return null;
@@ -67,9 +21,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  if (kDebugMode) {
-    await populateShopItems(); // Only run in debug mode
-  }
   //await uploadConfigData();
   runApp(const ProviderScope(child: FirebaseReadyApp()));
 }

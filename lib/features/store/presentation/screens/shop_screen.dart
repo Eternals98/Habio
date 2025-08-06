@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/store/domain/entities/shop_item.dart';
 import 'package:per_habit/features/store/presentation/controllers/shop_provider.dart';
 import 'package:per_habit/features/store/presentation/widgets/item_list.dart';
@@ -16,6 +18,17 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
   String? _selectedCategory;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final category = GoRouterState.of(context).uri.queryParameters['category'];
+    if (category != null &&
+        category == 'habipoints' &&
+        _selectedCategory != 'habipoints') {
+      setState(() => _selectedCategory = 'habipoints');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
@@ -27,25 +40,12 @@ class _ShopScreenState extends ConsumerState<ShopScreen> {
     }
 
     final shopItemsState = ref.watch(shopItemsStreamProvider);
-    final userState = ref.watch(userProvider(userId));
+    ref.watch(userProvider(userId));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tienda'),
-        actions: [
-          userState.when(
-            data:
-                (user) => Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Chip(
-                    label: Text('${user.habipoints} HabiPoints'),
-                    avatar: const Icon(Icons.monetization_on, size: 18),
-                  ),
-                ),
-            loading: () => const CircularProgressIndicator(),
-            error: (_, __) => const Text('Error'),
-          ),
-        ],
+        actions: const [AppBarActions()],
       ),
       body: Column(
         children: [
