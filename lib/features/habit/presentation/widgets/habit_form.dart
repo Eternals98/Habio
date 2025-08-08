@@ -85,7 +85,6 @@ class _HabitFormState extends ConsumerState<HabitForm> {
       createdAt: widget.initialHabit?.createdAt ?? DateTime.now(),
       frequencyCount: frequencyCount,
       scheduleTimes: scheduleTimes,
-      position: widget.initialHabit?.position ?? {'x': 0.0, 'y': 0.0},
     );
 
     final controller = ref.read(habitControllerProvider.notifier);

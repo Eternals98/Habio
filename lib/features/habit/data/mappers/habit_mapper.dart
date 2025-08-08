@@ -21,7 +21,6 @@ class HabitMapper {
       createdAt: model.createdAt,
       frequencyCount: model.frequencyCount,
       scheduleTimes: model.scheduleTimes,
-      position: model.position,
     );
   }
 
@@ -44,7 +43,6 @@ class HabitMapper {
       createdAt: entity.createdAt,
       frequencyCount: entity.frequencyCount,
       scheduleTimes: entity.scheduleTimes,
-      position: entity.position,
     );
   }
 }

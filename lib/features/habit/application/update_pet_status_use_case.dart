@@ -33,7 +33,6 @@ class UpdatePetStatusUseCase {
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
-        position: habit.position, // Ensure to keep the position intacta
       );
 
       await repository.updateHabit(updated);

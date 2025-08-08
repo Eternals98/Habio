@@ -49,7 +49,6 @@ class AddExperienceToHabitUseCase {
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
-        position: habit.position, // Ensure to keep the position intact
       );
       await repository.updateHabit(updated);
     }

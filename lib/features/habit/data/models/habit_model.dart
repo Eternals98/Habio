@@ -20,7 +20,6 @@ class HabitModel {
   final DateTime? lastCompletedDate;
   final int frequencyCount;
   final List<String> scheduleTimes;
-  final Map<String, double> position;
 
   HabitModel({
     required this.id,
@@ -40,7 +39,6 @@ class HabitModel {
     required this.lastCompletedDate,
     required this.frequencyCount,
     required this.scheduleTimes,
-    required this.position,
   });
 
   factory HabitModel.fromMap(String id, Map<String, dynamic> map) {
@@ -65,9 +63,6 @@ class HabitModel {
       createdAt: (map['createdAt'] as Timestamp).toDate(),
       frequencyCount: map['frequencyCount'] ?? 1,
       scheduleTimes: List<String>.from(map['scheduleTimes'] ?? []),
-      position: Map<String, double>.from(
-        map['position'] ?? {'x': 0.0, 'y': 0.0},
-      ), 
     );
   }
   Map<String, dynamic> toMap() {
@@ -91,7 +86,6 @@ class HabitModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'frequencyCount': frequencyCount,
       'scheduleTimes': scheduleTimes,
-      'position': position,
     };
   }
 }

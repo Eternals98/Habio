@@ -29,6 +29,7 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
   late final ClearTempStatusUseCase _clearTemp;
   late final UpdatePetStatusUseCase _updateStatus;
 
+  bool _isDragging = false; // Bandera para pausar el stream durante el arrastre
   String? _roomId;
   StreamSubscription<List<Habit>>? _subscription;
 
@@ -67,8 +68,18 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
 
     _subscription?.cancel();
     _subscription = _getByRoom(_roomId!).listen((habits) {
-      state = AsyncData(habits);
+      if (!_isDragging) {
+        // Solo actualizar si no se está arrastrando
+        state = AsyncData(habits);
+      }
     });
+  }
+
+  void setDragging(bool isDragging) {
+    _isDragging = isDragging;
+    if (!_isDragging && _roomId != null) {
+      _listenToHabits(); // Reanudar stream al soltar
+    }
   }
 
   Future<void> createHabit(Habit habit) async {
@@ -130,7 +141,6 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
       createdAt: habit.createdAt,
       frequencyCount: habit.frequencyCount,
       scheduleTimes: habit.scheduleTimes,
-      position: habit.position, // Aseguramos que la posición se mantenga
     );
 
     await _update(updated);
@@ -153,33 +163,5 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
       maxLevel: maxLevel,
       isFirstUseOfPetType: isFirstUseOfPetType,
     );
-  }
-
-  Future<void> updateHabitPosition(
-    Habit habit,
-    Map<String, double> newPosition,
-  ) async {
-    final updated = Habit(
-      id: habit.id,
-      name: habit.name,
-      petType: habit.petType,
-      goal: habit.goal,
-      progress: habit.progress,
-      life: habit.life,
-      points: habit.points,
-      level: habit.level,
-      experience: habit.experience,
-      baseStatus: habit.baseStatus,
-      tempStatus: habit.tempStatus,
-      streak: habit.streak,
-      lastCompletedDate: habit.lastCompletedDate,
-      roomId: habit.roomId,
-      createdAt: habit.createdAt,
-      frequencyCount: habit.frequencyCount,
-      scheduleTimes: habit.scheduleTimes,
-      position: newPosition,
-    );
-
-    await _update(updated);
   }
 }

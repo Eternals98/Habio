@@ -38,7 +38,9 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
     final room = await ref
         .read(roomControllerProvider.notifier)
         .getRoomById(widget.roomId);
-    setState(() => _room = room);
+    if (mounted) {
+      setState(() => _room = room);
+    }
   }
 
   void _onAddHabit() {
@@ -140,14 +142,10 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
       await ref
           .read(roomControllerProvider.notifier)
           .rename(updatedRoom.id, updatedName);
-      setState(() => _room = updatedRoom);
+      if (mounted) {
+        setState(() => _room = updatedRoom);
+      }
     }
-  }
-
-  void _onHabitPositionChanged(Habit habit, Map<String, double> newPosition) {
-    ref
-        .read(habitControllerProvider.notifier)
-        .updateHabitPosition(habit, newPosition);
   }
 
   void _onInviteMember() async {
@@ -218,8 +216,6 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final habitsAsync = ref.watch(habitControllerProvider);
-
     return Scaffold(
       appBar: AppBar(
         title: Text(_room?.name ?? 'Room'),
@@ -228,23 +224,17 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
           IconButton(
             icon: const Icon(Icons.person_add),
             tooltip: 'Invitar miembro',
-            onPressed: () {
-              _onInviteMember();
-            },
+            onPressed: _onInviteMember,
           ),
           IconButton(
             icon: const Icon(Icons.edit),
             tooltip: 'Editar room',
-            onPressed: () {
-              _onEditRoom();
-            },
+            onPressed: _onEditRoom,
           ),
           IconButton(
             icon: const Icon(Icons.delete),
             tooltip: 'Eliminar room',
-            onPressed: () {
-              _onDeleteRoom();
-            },
+            onPressed: _onDeleteRoom,
           ),
         ],
       ),
@@ -253,18 +243,23 @@ class _RoomDetailsScreenState extends ConsumerState<RoomDetailsScreen> {
         label: const Text('Añadir Hábito'),
         icon: const Icon(Icons.add),
       ),
-      body: habitsAsync.when(
-        data: (habits) {
-          return PetHabitCanvas(
-            habits: habits,
-            onEdit: _onEditHabit,
-            onDelete: _onDeleteHabit,
-            onTap: _onShowHabitDetails,
-            onPositionChanged: _onHabitPositionChanged,
+      body: Consumer(
+        // Usar Consumer para aislar la lógica de hábitos
+        builder: (context, ref, child) {
+          final habitsAsync = ref.watch(habitControllerProvider);
+          return habitsAsync.when(
+            data: (habits) {
+              return PetHabitCanvas(
+                habits: habits,
+                onEdit: _onEditHabit,
+                onDelete: _onDeleteHabit,
+                onTap: _onShowHabitDetails,
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('Error cargando hábitos: $e')),
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error cargando hábitos: $e')),
       ),
     );
   }

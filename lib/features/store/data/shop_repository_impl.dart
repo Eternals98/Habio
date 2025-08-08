@@ -23,9 +23,6 @@ class ShopRepositoryImpl implements ShopRepository {
     return datasource.watchShopItems().map(
       (models) =>
           models.map((model) {
-            if (kDebugMode) {
-              print('Processing shop item: ${model.toMap()}');
-            }
             return ShopItem(
               id: model.id,
               name: model.name,
@@ -36,9 +33,6 @@ class ShopRepositoryImpl implements ShopRepository {
               isBundle: model.isBundle,
               content:
                   model.content.map((itemModel) {
-                    if (kDebugMode) {
-                      print('Processing content item: ${itemModel.toMap()}');
-                    }
                     if (itemModel is MascotaModel) {
                       return Mascota(
                         id: itemModel.id,

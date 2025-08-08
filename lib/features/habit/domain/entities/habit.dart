@@ -18,8 +18,6 @@ class Habit {
   final int frequencyCount; // ← NUEVO
   final List<String> scheduleTimes; // ← NUEVO
 
-  final Map<String, double> position; // { "x": 0.0, "y": 0.0 }
-
   Habit({
     required this.id,
     required this.name,
@@ -38,6 +36,5 @@ class Habit {
     required this.createdAt,
     required this.frequencyCount,
     required this.scheduleTimes,
-    required this.position,
   });
 }

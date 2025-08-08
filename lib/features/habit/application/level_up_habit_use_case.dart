@@ -41,7 +41,6 @@ class LevelUpHabitUseCase {
       createdAt: habit.createdAt,
       frequencyCount: habit.frequencyCount,
       scheduleTimes: habit.scheduleTimes,
-      position: habit.position, // Aseguramos que la posición se mantenga
     );
 
     await repository.updateHabit(updatedHabit);

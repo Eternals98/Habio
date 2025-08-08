@@ -19,14 +19,13 @@ class ClearTempStatusUseCase {
         level: habit.level,
         experience: habit.experience,
         baseStatus: habit.baseStatus,
-        tempStatus: null, // ← limpiamos el estado temporal
+        tempStatus: null,
         streak: habit.streak,
         lastCompletedDate: habit.lastCompletedDate,
         roomId: habit.roomId,
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
-        position: habit.position, // Aseguramos mantener la posición intacta
       );
 
       await repository.updateHabit(updated);
