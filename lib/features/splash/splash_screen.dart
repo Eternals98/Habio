@@ -14,23 +14,37 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _checkLogin();
+    _checkLoginAndRedirect();
   }
 
-  Future<void> _checkLogin() async {
-    await Future.delayed(
-      const Duration(seconds: 2),
-    ); // Mostrar splash un momento
+  Future<void> _checkLoginAndRedirect() async {
+    try {
+      // Esperar al primer evento del stream para que Firebase restaure sesión en web
+      final User? user = await FirebaseAuth.instance.authStateChanges().first;
 
-    if (FirebaseAuth.instance.currentUser != null) {
-      context.go('/home');
-    } else {
+      // Pequeña pausa para que el splash se vea y evitar parpadeos
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      if (!mounted) return;
+
+      if (user != null) {
+        // Ya autenticado -> home
+        context.go('/home');
+      } else {
+        // No autenticado -> login
+        context.go('/login');
+      }
+    } catch (e) {
+      // En caso de error, ir a login
+      if (!mounted) return;
       context.go('/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return const Scaffold(
+      body: SafeArea(child: Center(child: CircularProgressIndicator())),
+    );
   }
 }

@@ -11,58 +11,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// 🌱 App real con GoRouter y lógica de autenticación
 import 'package:per_habit/core/routes/app_routes.dart';
 
+/// Proveedor global que expone el perfil de usuario autenticado
 final userProfileProvider = StreamProvider<UserProfile?>((ref) {
   return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
     if (user == null) return null;
     return ref.read(userProvider(user.uid).future);
   });
 });
-void main() async {
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  //await uploadConfigData();
-  runApp(const ProviderScope(child: FirebaseReadyApp()));
-}
-
-/// 🔰 Primera pantalla que espera y luego lanza la app real
-class FirebaseReadyApp extends StatelessWidget {
-  const FirebaseReadyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SplashLoadingScreen(),
-    );
-  }
-}
-
-/// ⏳ Pantalla de carga inicial segura
-class SplashLoadingScreen extends StatefulWidget {
-  const SplashLoadingScreen({super.key});
-
-  @override
-  State<SplashLoadingScreen> createState() => _SplashLoadingScreenState();
-}
-
-class _SplashLoadingScreenState extends State<SplashLoadingScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _start();
-  }
-
-  Future<void> _start() async {
-    await Future.delayed(const Duration(seconds: 0));
-    // ✅ Después del splash, lanza la app real (MyApp)
-    runApp(const ProviderScope(child: MyApp()));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
-  }
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -74,6 +34,7 @@ class MyApp extends StatelessWidget {
       title: 'Habio',
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.teal),
       routerConfig: AppRouter.router,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

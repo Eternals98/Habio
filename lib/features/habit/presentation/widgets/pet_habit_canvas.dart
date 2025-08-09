@@ -27,29 +27,33 @@ class PetHabitCanvas extends ConsumerStatefulWidget {
   ConsumerState<PetHabitCanvas> createState() => _PetHabitCanvasState();
 }
 
-class _PetHabitCanvasState extends ConsumerState<PetHabitCanvas> {
-  late Map<String, ValueNotifier<Offset>>
-  _positionNotifiers; // Posiciones con ValueNotifier
-  late Map<String, Timer>
-  _movementTimers; // Controla los movimientos aleatorios
-  final double _groundY = 300.0; // Y fija como "suelo"
-  late double _maxY; // Máximo y calculado dinámicamente
+class _PetHabitCanvasState extends ConsumerState<PetHabitCanvas>
+    with TickerProviderStateMixin {
+  late Map<String, ValueNotifier<Offset>> _positionNotifiers;
+  late Map<String, Timer> _movementTimers;
+  late Map<String, AnimationController> _fallControllers;
+  late Map<String, Animation<double>> _fallAnimations;
+
+  final double _groundY = 400.0;
+  late double _maxY;
   final Random _random = Random();
-  final Map<String, List<Future>> _fallAnimations =
-      {}; // Para rastrear animaciones de caída
+  final Map<String, bool> _isFalling = {};
+  Offset? _dragStartOffset;
+  Offset? _habitStartOffset;
 
   @override
   void initState() {
     super.initState();
     _positionNotifiers = {};
     _movementTimers = {};
+    _fallControllers = {};
+    _fallAnimations = {};
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _maxY =
-        (MediaQuery.of(context).size.height - 150 - 56) / 10; // Recalcular maxY
+    _maxY = (MediaQuery.of(context).size.height - 150 - 56) / 10;
     _initializeOrUpdatePositions();
     _startRandomMovements();
   }
@@ -86,46 +90,77 @@ class _PetHabitCanvasState extends ConsumerState<PetHabitCanvas> {
     final currentPos = _positionNotifiers[habitId]?.value;
     if (currentPos?.dy != _groundY ||
         (_movementTimers[habitId]?.isActive ?? false)) {
-      return; // No mover si no está en y=300 o ya está activo
+      return;
     }
-    if (_movementTimers[habitId]?.isActive ?? false) {
-      _movementTimers[habitId]?.cancel();
-    }
-    final delay = Duration(seconds: _random.nextInt(5) + 2); // 2-6 segundos
+    _movementTimers[habitId]?.cancel();
+    final delay = Duration(seconds: _random.nextInt(5) + 2);
     _movementTimers[habitId] = Timer(delay, () async {
       if (mounted && _positionNotifiers[habitId]?.value.dy == _groundY) {
         await _performRandomSteps(habitId);
-        _scheduleNextMove(habitId); // Programar el próximo movimiento
+        _scheduleNextMove(habitId);
       }
     });
   }
 
   Future<void> _performRandomSteps(String habitId) async {
-    if (_positionNotifiers[habitId]?.value.dy != _groundY)
-      return; // No mover si no está en y=300
-    final stepCount = _random.nextInt(4) + 2; // 2 a 5 pasos
+    if (_positionNotifiers[habitId]?.value.dy != _groundY) return;
+    final stepCount = _random.nextInt(4) + 2;
     for (int i = 0; i < stepCount; i++) {
       if (mounted) {
         _positionNotifiers[habitId]?.value = Offset(
           (_positionNotifiers[habitId]!.value.dx +
                   (_random.nextDouble() * 30 - 15))
               .clamp(0, MediaQuery.of(context).size.width - 150),
-          _groundY, // Mantiene y=300
+          _groundY,
         );
         if (i < stepCount - 1) {
-          await Future.delayed(
-            const Duration(milliseconds: 200),
-          ); // Pausa entre pasos
+          await Future.delayed(const Duration(milliseconds: 200));
         }
       }
     }
   }
 
+  void _startFall(String habitId) {
+    final posNotifier = _positionNotifiers[habitId]!;
+    final startY = posNotifier.value.dy;
+
+    if (startY >= _groundY) return;
+
+    _fallControllers[habitId]?.dispose();
+
+    final distance = _groundY - startY;
+    final duration = Duration(
+      milliseconds: (distance * 2).toInt().clamp(100, 800),
+    );
+
+    final controller = AnimationController(vsync: this, duration: duration);
+    final animation = Tween<double>(
+      begin: startY,
+      end: _groundY,
+    ).animate(CurvedAnimation(parent: controller, curve: Curves.easeIn));
+
+    animation.addListener(() {
+      posNotifier.value = Offset(posNotifier.value.dx, animation.value);
+    });
+
+    animation.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        _isFalling[habitId] = false;
+        _scheduleNextMove(habitId);
+        ref.read(habitControllerProvider.notifier).setDragging(false);
+      }
+    });
+
+    _fallAnimations[habitId] = animation;
+    _isFalling[habitId] = true;
+    _fallControllers[habitId] = controller;
+    controller.forward();
+  }
+
   @override
   void didUpdateWidget(covariant PetHabitCanvas oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _maxY =
-        (MediaQuery.of(context).size.height - 150 - 56) / 10; // Recalcular maxY
+    _maxY = (MediaQuery.of(context).size.height - 150 - 56) / 10;
     _initializeOrUpdatePositions();
     _startRandomMovements();
   }
@@ -138,10 +173,8 @@ class _PetHabitCanvasState extends ConsumerState<PetHabitCanvas> {
     for (final notifier in _positionNotifiers.values) {
       notifier.dispose();
     }
-    for (final futures in _fallAnimations.values) {
-      for (final future in futures) {
-        future.then((_) => null); // Cancelar animaciones pendientes
-      }
+    for (final controller in _fallControllers.values) {
+      controller.dispose();
     }
     super.dispose();
   }
@@ -164,83 +197,53 @@ class _PetHabitCanvasState extends ConsumerState<PetHabitCanvas> {
                   top: pos.dy,
                   child: GestureDetector(
                     onTap: () => widget.onTap(habit),
-                    onPanUpdate: (details) {
-                      final newX =
-                          (pos.dx + details.delta.dx)
-                              .clamp(0, MediaQuery.of(context).size.width - 150)
-                              .toDouble();
-                      var newY = (pos.dy + details.delta.dy).toDouble();
-                      if (newY > _groundY)
-                        newY = _groundY; // Limita subir más allá de 300
-                      if (newY <= _maxY)
-                        newY = _maxY; // Límite inferior (techo)
-                      posNotifier.value = Offset(newX, newY);
-                      // Si y < 300, cancelar movimiento aleatorio
-                      if (newY < _groundY &&
-                          (_movementTimers[habit.id]?.isActive ?? false)) {
-                        _movementTimers[habit.id]?.cancel();
-                      }
-                    },
                     onPanStart: (details) {
+                      _isFalling[habit.id] = false;
+                      _fallControllers[habit.id]?.stop();
+
+                      _dragStartOffset = details.localPosition;
+                      _habitStartOffset = posNotifier.value;
+
                       ref
                           .read(habitControllerProvider.notifier)
-                          .setDragging(true); // Pausar stream
-                      // Cancelar animación de caída si está en curso
-                      _fallAnimations[habit.id]?.forEach(
-                        (future) => future.then((_) => null),
-                      );
-                      _fallAnimations.remove(habit.id);
+                          .setDragging(true);
+                    },
+                    onPanUpdate: (details) {
+                      if (_dragStartOffset != null &&
+                          _habitStartOffset != null) {
+                        final dx =
+                            details.localPosition.dx - _dragStartOffset!.dx;
+                        final dy =
+                            details.localPosition.dy - _dragStartOffset!.dy;
+
+                        double newX = (_habitStartOffset!.dx + dx).clamp(
+                          0,
+                          MediaQuery.of(context).size.width - 150,
+                        );
+                        double newY = (_habitStartOffset!.dy + dy);
+
+                        if (newY > _groundY) newY = _groundY;
+                        if (newY <= _maxY) newY = _maxY;
+
+                        posNotifier.value = Offset(newX, newY);
+
+                        if (newY < _groundY) {
+                          _movementTimers[habit.id]?.cancel();
+                        }
+                      }
                     },
                     onPanEnd: (details) {
+                      _dragStartOffset = null;
+                      _habitStartOffset = null;
+
                       final currentPos = posNotifier.value;
                       if (currentPos.dy < _groundY) {
-                        final difference =
-                            _groundY - currentPos.dy; // Diferencia a recorrer
-                        final step = difference / 20; // Dividir en 20 pasos
-                        final fallFutures = <Future>[];
-                        for (int i = 1; i <= 20; i++) {
-                          final future = Future.delayed(
-                            Duration(milliseconds: i * 100),
-                            () {
-                              if (mounted) {
-                                posNotifier.value = Offset(
-                                  currentPos.dx,
-                                  currentPos.dy + (step * i) <= _groundY
-                                      ? currentPos.dy + (step * i)
-                                      : _groundY,
-                                );
-                              }
-                            },
-                          );
-                          fallFutures.add(future);
-                        }
-                        _fallAnimations[habit.id] = fallFutures;
-                        // Asegurar que termine exactamente en _groundY y reanudar movimiento
-                        Future.delayed(const Duration(milliseconds: 2000), () {
-                          if (mounted) {
-                            posNotifier.value = Offset(currentPos.dx, _groundY);
-                            if (posNotifier.value.dy == _groundY &&
-                                !(_movementTimers[habit.id]?.isActive ??
-                                    false)) {
-                              _scheduleNextMove(habit.id);
-                            }
-                            ref
-                                .read(habitControllerProvider.notifier)
-                                .setDragging(false); // Reanudar stream
-                            _fallAnimations.remove(
-                              habit.id,
-                            ); // Limpiar animación terminada
-                          }
-                        });
+                        _startFall(habit.id);
                       } else {
-                        // Reanudar movimiento si ya está en el suelo
-                        if (posNotifier.value.dy == _groundY &&
-                            !(_movementTimers[habit.id]?.isActive ?? false)) {
-                          _scheduleNextMove(habit.id);
-                        }
+                        _scheduleNextMove(habit.id);
                         ref
                             .read(habitControllerProvider.notifier)
-                            .setDragging(false); // Reanudar stream
+                            .setDragging(false);
                       }
                     },
                     child: Container(

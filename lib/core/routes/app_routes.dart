@@ -25,72 +25,87 @@ class AppRouter {
       final user = FirebaseAuth.instance.currentUser;
       final location = state.uri.toString();
 
-      if (location == '/') return null;
+      // Rutas públicas que permitimos sin auth
+      final isPublicRoute =
+          location == '/' ||
+          location == '/login' ||
+          location == '/register' ||
+          location == '/reset-password';
 
-      final isLoggingIn = location == '/login' || location == '/register';
-
-      if (user == null && !isLoggingIn) {
+      // Si no está autenticado y no está en ruta pública, enviar a login
+      if (user == null && !isPublicRoute) {
         return '/login';
       }
 
-      if (user != null && isLoggingIn) {
+      // Si está autenticado y está en login/register, evitarlo y mandarlo al home
+      final isAuthRoute = location == '/login' || location == '/register';
+      if (user != null && isAuthRoute) {
         return '/home';
       }
 
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+      // Splash (siempre pública)
+      GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
+
+      // Rutas públicas
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (_, __) => const LoginScreen(),
       ),
       GoRoute(
         path: '/register',
         name: 'register',
-        builder: (context, state) => const RegisterScreen(),
+        builder: (_, __) => const RegisterScreen(),
       ),
       GoRoute(
         path: '/reset-password',
         name: 'reset-password',
-        builder: (context, state) => const ResetPasswordScreen(),
+        builder: (_, __) => const ResetPasswordScreen(),
       ),
+
+      // Rutas privadas (protegidas globalmente por redirect)
       GoRoute(
         path: '/home',
         name: 'home',
-        builder: (context, state) => NavigationShell(child: const HomeScreen()),
+        builder: (_, __) => NavigationShell(child: const HomeScreen()),
       ),
       GoRoute(
         path: '/profile',
         name: 'profile',
-        builder:
-            (context, state) =>
-                NavigationShell(child: const UserProfileScreen()),
+        builder: (_, __) => NavigationShell(child: const UserProfileScreen()),
       ),
       GoRoute(
         path: '/room/:id',
         name: 'room-details',
-        builder: (context, state) {
+        builder: (_, state) {
           final roomId = state.pathParameters['id']!;
           return RoomDetailsScreen(roomId: roomId);
         },
       ),
       GoRoute(
         path: '/store',
-        builder: (context, state) => NavigationShell(child: const ShopScreen()),
+        name: 'store',
+        builder: (_, __) => NavigationShell(child: const ShopScreen()),
       ),
+
+      // Inventary: necesitamos el inventario del perfil -> usamos Consumer para obtenerlo y pasar el parámetro requerido
       GoRoute(
         path: '/inventary',
+        name: 'inventary',
         builder:
-            (context, state) => Consumer(
+            (_, __) => Consumer(
               builder: (context, ref, _) {
                 final userState = ref.watch(userControllerProvider);
                 return userState.when(
                   data: (userProfile) {
                     if (userProfile == null) {
+                      // Si perfil no existe por alguna razón, mandamos al login
                       return const LoginScreen();
                     }
+                    // Pasamos el inventario al widget que lo necesita
                     return NavigationShell(
                       child: InventaryScreen(
                         inventario: userProfile.inventario,
@@ -102,7 +117,7 @@ class AppRouter {
                         body: Center(child: CircularProgressIndicator()),
                       ),
                   error:
-                      (error, _) => const Scaffold(
+                      (_, __) => const Scaffold(
                         body: Center(child: Text('Error loading profile')),
                       ),
                 );
