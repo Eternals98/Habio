@@ -1,19 +1,21 @@
 // ignore_for_file: deprecated_member_use
 
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/game/habio_game.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
+import 'package:per_habit/features/habit/domain/entities/pet_type.dart';
 
 enum PetState { idle, walk }
 
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
   String habitId;
-  String petType;
+  PetType petType;
   String name;
   int level;
   static const double petSize = 80;
@@ -36,20 +38,14 @@ class HabitPetComponent extends PositionComponent
   late Component _visualComponent;
   HabitPetComponent.fromHabit(Habit h, this.groundY)
     : habitId = h.id,
-      petType = h.petType,
+      petType = PetType.fromString(h.petType),
       name = h.name,
       level = h.level,
       super(size: Vector2.all(petSize), anchor: Anchor.center);
   @override
   Future<void> onLoad() async {
-    if (petType == 'cat') {
-      _visualComponent = RectangleComponent(
-        size: size,
-        anchor: Anchor.center,
-        paint: Paint()..color = Colors.blue,
-      );
-    } else {
-      final image = await gameRef.images.load('pets/DinoSprites - vita.png');
+    ui.Image? image = await gameRef.images.load(petType.imagePath) as ui.Image?;
+    if (image != null) {
       final idle = SpriteAnimation.fromFrameData(
         image,
         SpriteAnimationData.sequenced(
@@ -76,6 +72,12 @@ class HabitPetComponent extends PositionComponent
         current: PetState.idle,
         size: size,
         anchor: Anchor.center,
+      );
+    } else {
+      _visualComponent = RectangleComponent(
+        size: size,
+        anchor: Anchor.center,
+        paint: Paint()..color = Colors.blue,
       );
     }
     add(_visualComponent);
