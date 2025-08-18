@@ -32,7 +32,6 @@ class RoomRepositoryImpl implements RoomRepository {
         .map((r) => r.order)
         .fold<int>(0, (prev, o) => o > prev ? o : prev);
 
-        
     final model = RoomModel(
       id: newDocId,
       name: name,
@@ -40,9 +39,7 @@ class RoomRepositoryImpl implements RoomRepository {
       members: [],
       shared: false,
       createdAt: DateTime.now(),
-      order:
-          maxOrder +
-          1, // Asumiendo que maxOrder es una variable que contiene el orden máximo actual
+      order: maxOrder + 1,
     );
 
     final saved = await datasource.createRoom(model);

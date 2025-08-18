@@ -48,16 +48,16 @@ class HabitDatasourceImpl implements HabitDatasource {
 
   @override
   Stream<List<HabitModel>> getHabitsByRoom(String roomId) {
-    final query = firestore
+    return firestore
         .collection('rooms')
         .doc(roomId)
         .collection('habits')
-        .orderBy('createdAt', descending: true);
-
-    return query.snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return HabitModel.fromMap(doc.id, doc.data());
-      }).toList();
-    });
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return HabitModel.fromFirestore(doc);
+          }).toList();
+        });
   }
 }
