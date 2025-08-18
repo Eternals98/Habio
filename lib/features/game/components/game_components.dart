@@ -8,91 +8,152 @@ import 'package:flutter/material.dart';
 import 'package:per_habit/features/game/habio_game.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 
+enum PetState { idle, walk }
+
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
   String habitId;
   String petType;
   String name;
   int level;
-
   static const double petSize = 80;
   bool _isDragging = false;
-
   // Física
   double vy = 0; // velocidad vertical
-  static const double gravity = 400; // px/s^2
+  static const double gravity = 700; // aumenté un poco
   final double groundY;
-
   // Movimiento automático
-  Timer? _moveTimer;
   final Random _rand = Random();
   int _stepsLeft = 0;
   double _stepDirection = 0;
-
+  double _currentStepProgress = 0;
+  static const double stepDuration = 0.3; // duración de cada paso
+  static const double _stepDistance = 10; // px por paso
+  double _stepStartX = 0;
+  // Reposo
+  double _restTimeLeft = 0;
+  // Visual
+  late Component _visualComponent;
   HabitPetComponent.fromHabit(Habit h, this.groundY)
     : habitId = h.id,
       petType = h.petType,
       name = h.name,
       level = h.level,
       super(size: Vector2.all(petSize), anchor: Anchor.center);
-
   @override
   Future<void> onLoad() async {
-    _scheduleNextMove();
+    if (petType == 'cat') {
+      _visualComponent = RectangleComponent(
+        size: size,
+        anchor: Anchor.center,
+        paint: Paint()..color = Colors.blue,
+      );
+    } else {
+      final image = await gameRef.images.load('pets/DinoSprites - vita.png');
+      final idle = SpriteAnimation.fromFrameData(
+        image,
+        SpriteAnimationData.sequenced(
+          amount: 4,
+          stepTime: 0.2,
+          textureSize: Vector2(24, 24),
+          texturePosition: Vector2(0, 0),
+        ),
+      );
+      final walk = SpriteAnimation.fromFrameData(
+        image,
+        SpriteAnimationData.sequenced(
+          amount: 4,
+          stepTime: 0.1,
+          textureSize: Vector2(24, 24),
+          texturePosition: Vector2(
+            4 * 24,
+            0,
+          ), // Ajusta si frames walk no son 4-7
+        ),
+      );
+      _visualComponent = SpriteAnimationGroupComponent(
+        animations: {PetState.idle: idle, PetState.walk: walk},
+        current: PetState.idle,
+        size: size,
+        anchor: Anchor.center,
+      );
+    }
+    add(_visualComponent);
+    // Decidir si inicia en reposo o movimiento
+    if (_rand.nextBool()) {
+      _enterRest();
+    } else {
+      _enterMove();
+    }
     return super.onLoad();
   }
 
-  void _scheduleNextMove() {
-    final duration = Duration(milliseconds: 500 + _rand.nextInt(1500));
-    _stepsLeft = (1 + _rand.nextInt(5)); // max 5 pasos
-    _stepDirection = _rand.nextBool() ? 1 : -1;
-
-    _moveTimer = Timer(
-      duration.inMilliseconds / 1000,
-      repeat: false,
-      onTick: () {
-        // Ejecutar un paso
-        _moveStep();
-        _scheduleNextMove();
-      },
-    )..start();
+  void _enterRest() {
+    _restTimeLeft = 3 + _rand.nextInt(8).toDouble(); // 3-10 seg
+    _stepsLeft = 0;
   }
 
-  void _moveStep() {
-    if (_stepsLeft > 0 && !_isDragging) {
-      position.x += _stepDirection * 10; // 10px por paso
-      position.x = position.x.clamp(size.x / 2, gameRef.size.x - size.x / 2);
-      _stepsLeft--;
-    }
+  void _enterMove() {
+    _stepsLeft = 2 + _rand.nextInt(4); // 2-5 pasos
+    _stepDirection = _rand.nextBool() ? 1 : -1;
+    _currentStepProgress = 0;
+    _stepStartX = position.x;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-
     // Física: gravedad
     if (!_isDragging) {
       vy += gravity * dt;
       position.y += vy * dt;
-
       if (position.y > groundY) {
         position.y = groundY;
         vy = 0;
       }
     }
-
-    _moveTimer?.update(dt);
+    // Movimiento automático
+    if (!_isDragging) {
+      if (_stepsLeft > 0) {
+        _currentStepProgress += dt / stepDuration;
+        if (_currentStepProgress > 1) _currentStepProgress = 1;
+        position.x =
+            _stepStartX + _stepDirection * _stepDistance * _currentStepProgress;
+        if (_currentStepProgress >= 1) {
+          _stepsLeft--;
+          _stepStartX = position.x;
+          _currentStepProgress = 0;
+          if (_stepsLeft == 0) _enterRest();
+        }
+      } else {
+        // Reposo
+        _restTimeLeft -= dt;
+        if (_restTimeLeft <= 0) _enterMove();
+      }
+      position.x = position.x.clamp(size.x / 2, gameRef.size.x - size.x / 2);
+    }
+    // Actualizar visual basado en estado
+    bool isResting = _stepsLeft == 0;
+    if (petType == 'cat' && _visualComponent is RectangleComponent) {
+      (_visualComponent as RectangleComponent).paint.color =
+          isResting ? Colors.blue : Colors.green;
+    } else if (_visualComponent is SpriteAnimationGroupComponent) {
+      final group = _visualComponent as SpriteAnimationGroupComponent;
+      group.current = isResting ? PetState.idle : PetState.walk;
+      if (!isResting) {
+        group.scale.x = _stepDirection;
+      } else {
+        group.scale.x = 1;
+      }
+    }
+    // Mantener visual centrado
+    (_visualComponent as PositionComponent).position = Vector2.zero();
   }
 
   @override
   void render(Canvas canvas) {
-    final r = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.x, size.y),
-      const Radius.circular(12),
-    );
-    final paint = Paint()..color = Colors.orange;
-    canvas.drawRRect(r, paint);
-
+    super.render(canvas);
+    // Nombre centrado
     final textSpan = TextSpan(
       text: name,
       style: const TextStyle(
@@ -107,7 +168,10 @@ class HabitPetComponent extends PositionComponent
       textDirection: TextDirection.ltr,
     );
     tp.layout();
-    tp.paint(canvas, Offset((size.x - tp.width) / 2, (size.y - tp.height) / 2));
+    tp.paint(
+      canvas,
+      Offset((size.x - tp.width) / 2, (size.y - tp.height) / 2 - 20),
+    ); // Ajustado arriba si necesario
   }
 
   @override
@@ -143,7 +207,7 @@ class HabitPetComponent extends PositionComponent
   void onDragUpdate(DragUpdateEvent event) {
     position += event.localDelta;
     position.x = position.x.clamp(size.x / 2, gameRef.size.x - size.x / 2);
-    position.y = position.y.clamp(0, gameRef.size.y); // puede arrastrar en Y
+    position.y = position.y.clamp(0, gameRef.size.y);
   }
 
   @override
