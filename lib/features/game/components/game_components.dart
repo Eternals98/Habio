@@ -10,7 +10,7 @@ import 'package:per_habit/features/game/habio_game.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 import 'package:per_habit/features/habit/domain/entities/pet_type.dart';
 
-enum PetState { idle, walk }
+enum PetState { idle, walk, carry }
 
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
@@ -36,12 +36,14 @@ class HabitPetComponent extends PositionComponent
   double _restTimeLeft = 0;
   // Visual
   late Component _visualComponent;
+
   HabitPetComponent.fromHabit(Habit h, this.groundY)
     : habitId = h.id,
       petType = PetType.fromString(h.petType),
       name = h.name,
       level = h.level,
       super(size: Vector2.all(petSize), anchor: Anchor.center);
+
   @override
   Future<void> onLoad() async {
     ui.Image? image = await gameRef.images.load(petType.imagePath) as ui.Image?;
@@ -67,8 +69,21 @@ class HabitPetComponent extends PositionComponent
           ), // Ajusta si frames walk no son 4-7
         ),
       );
+      final carry = SpriteAnimation.fromFrameData(
+        image,
+        SpriteAnimationData.sequenced(
+          amount: 1, // o más si es animado
+          stepTime: 0.2,
+          textureSize: Vector2(24, 24),
+          texturePosition: Vector2(0, 48), // Ajusta: fila de "carry"
+        ),
+      );
       _visualComponent = SpriteAnimationGroupComponent(
-        animations: {PetState.idle: idle, PetState.walk: walk},
+        animations: {
+          PetState.idle: idle,
+          PetState.walk: walk,
+          PetState.carry: carry,
+        },
         current: PetState.idle,
         size: size,
         anchor: Anchor.center,
@@ -135,17 +150,19 @@ class HabitPetComponent extends PositionComponent
       position.x = position.x.clamp(size.x / 2, gameRef.size.x - size.x / 2);
     }
     // Actualizar visual basado en estado
-    bool isResting = _stepsLeft == 0;
-    if (petType == 'cat' && _visualComponent is RectangleComponent) {
-      (_visualComponent as RectangleComponent).paint.color =
-          isResting ? Colors.blue : Colors.green;
-    } else if (_visualComponent is SpriteAnimationGroupComponent) {
-      final group = _visualComponent as SpriteAnimationGroupComponent;
-      group.current = isResting ? PetState.idle : PetState.walk;
-      if (!isResting) {
-        group.scale.x = _stepDirection;
-      } else {
-        group.scale.x = 1;
+    if (!_isDragging) {
+      bool isResting = _stepsLeft == 0;
+      if (_visualComponent is RectangleComponent) {
+        (_visualComponent as RectangleComponent).paint.color =
+            isResting ? Colors.blue : Colors.green;
+      } else if (_visualComponent is SpriteAnimationGroupComponent) {
+        final group = _visualComponent as SpriteAnimationGroupComponent;
+        group.current = isResting ? PetState.idle : PetState.walk;
+        if (!isResting) {
+          group.scale.x = _stepDirection;
+        } else {
+          group.scale.x = 1;
+        }
       }
     }
     // Mantener visual centrado
@@ -202,23 +219,57 @@ class HabitPetComponent extends PositionComponent
 
   @override
   void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
     _isDragging = true;
   }
 
   @override
   void onDragUpdate(DragUpdateEvent event) {
+    _isDragging = true;
     position += event.localDelta;
     position.x = position.x.clamp(size.x / 2, gameRef.size.x - size.x / 2);
     position.y = position.y.clamp(0, gameRef.size.y);
+
+    // Si está siendo arrastrado y está por encima del suelo → estado carry
+    if (position.y < groundY &&
+        _visualComponent is SpriteAnimationGroupComponent) {
+      final group = _visualComponent as SpriteAnimationGroupComponent;
+      group.current = PetState.carry;
+    }
   }
 
   @override
   void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
     _isDragging = false;
+
+    // Volver al estado de movimiento o reposo
+    if (_visualComponent is SpriteAnimationGroupComponent) {
+      final group = _visualComponent as SpriteAnimationGroupComponent;
+      if (_stepsLeft > 0) {
+        group.current = PetState.walk;
+        group.scale.x = _stepDirection;
+      } else {
+        group.current = PetState.idle;
+        group.scale.x = 1;
+      }
+    }
   }
 
   @override
   void onDragCancel(DragCancelEvent event) {
+    super.onDragCancel(event);
     _isDragging = false;
+
+    if (_visualComponent is SpriteAnimationGroupComponent) {
+      final group = _visualComponent as SpriteAnimationGroupComponent;
+      if (_stepsLeft > 0) {
+        group.current = PetState.walk;
+        group.scale.x = _stepDirection;
+      } else {
+        group.current = PetState.idle;
+        group.scale.x = 1;
+      }
+    }
   }
 }
