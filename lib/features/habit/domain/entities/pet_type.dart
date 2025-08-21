@@ -1,6 +1,5 @@
 enum PetType {
-  cat('cat', '/pets/rojo.png'),
-  dog('dog', '/pets/verde.png');
+  penguin('Penguin', '/pets/penguin_full.png');
 
   final String name;
   final String imagePath;
@@ -10,7 +9,7 @@ enum PetType {
   static PetType fromString(String name) {
     return PetType.values.firstWhere(
       (type) => type.name == name,
-      orElse: () => PetType.cat, // Default to cat if not found
+      orElse: () => PetType.penguin, // Default to cat if not found
     );
   }
 }

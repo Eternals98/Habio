@@ -1,5 +1,4 @@
 // ignore_for_file: deprecated_member_use
-
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'package:per_habit/features/game/habio_game.dart';

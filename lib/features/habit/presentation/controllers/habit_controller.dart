@@ -134,6 +134,7 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
       createdAt: habit.createdAt,
       frequencyCount: habit.frequencyCount,
       scheduleTimes: habit.scheduleTimes,
+      frequencyPeriod: habit.frequencyPeriod,
     );
 
     await _update(updated);

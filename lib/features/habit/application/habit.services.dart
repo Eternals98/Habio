@@ -48,6 +48,7 @@ class AddExperienceToHabitUseCase {
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
+        frequencyPeriod: habit.frequencyPeriod,
       );
       await repository.updateHabit(updated);
     }
@@ -94,6 +95,7 @@ class LevelUpHabitUseCase {
       createdAt: habit.createdAt,
       frequencyCount: habit.frequencyCount,
       scheduleTimes: habit.scheduleTimes,
+      frequencyPeriod: habit.frequencyPeriod,
     );
 
     await repository.updateHabit(updatedHabit);
@@ -126,6 +128,7 @@ class ClearTempStatusUseCase {
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
+        frequencyPeriod: habit.frequencyPeriod,
       );
 
       await repository.updateHabit(updated);
@@ -203,6 +206,7 @@ class UpdatePetStatusUseCase {
         createdAt: habit.createdAt,
         frequencyCount: habit.frequencyCount,
         scheduleTimes: habit.scheduleTimes,
+        frequencyPeriod: habit.frequencyPeriod,
       );
 
       await repository.updateHabit(updated);

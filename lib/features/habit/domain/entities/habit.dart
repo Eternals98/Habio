@@ -16,7 +16,9 @@ class Habit {
   final DateTime createdAt;
 
   final int frequencyCount; // ← NUEVO
-  final List<String> scheduleTimes; // ← NUEVO
+  final List<String> scheduleTimes;
+
+  var frequencyPeriod; // ← NUEVO
 
   Habit({
     required this.id,
@@ -36,5 +38,6 @@ class Habit {
     required this.createdAt,
     required this.frequencyCount,
     required this.scheduleTimes,
+    required String frequencyPeriod,
   });
 }

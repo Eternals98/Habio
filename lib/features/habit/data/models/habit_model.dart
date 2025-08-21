@@ -20,6 +20,7 @@ class HabitModel {
   final DateTime? lastCompletedDate;
   final int frequencyCount;
   final List<String> scheduleTimes;
+  final String frequencyPeriod;
 
   HabitModel({
     required this.id,
@@ -39,6 +40,7 @@ class HabitModel {
     required this.lastCompletedDate,
     required this.frequencyCount,
     required this.scheduleTimes,
+    required this.frequencyPeriod,
   });
 
   /// ✅ Método para inicializar desde Firestore
@@ -66,6 +68,7 @@ class HabitModel {
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       frequencyCount: data['frequencyCount'] ?? 1,
       scheduleTimes: List<String>.from(data['scheduleTimes'] ?? []),
+      frequencyPeriod: data['frequencyPeriod'] ?? 'day',
     );
   }
 
@@ -92,6 +95,7 @@ class HabitModel {
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       frequencyCount: map['frequencyCount'] ?? 1,
       scheduleTimes: List<String>.from(map['scheduleTimes'] ?? []),
+      frequencyPeriod: map['frequencyCount'] ?? 'day',
     );
   }
 
