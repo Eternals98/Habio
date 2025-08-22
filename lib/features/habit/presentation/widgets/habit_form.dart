@@ -1,17 +1,18 @@
+// lib/features/habit/presentation/widgets/habit_form.dart
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:per_habit/features/habit/presentation/controllers/habit_provider.dart';
 import 'package:uuid/uuid.dart';
-import 'package:per_habit/core/config/models/pet_type_model.dart';
-import 'package:per_habit/core/config/models/personality_model.dart';
+
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
-// ignore: unused_import
-import 'package:per_habit/features/habit/presentation/controllers/habit_controller.dart';
+import 'package:per_habit/features/habit/presentation/controllers/habit_provider.dart';
 import 'package:per_habit/features/habit/presentation/widgets/pet_type_selector.dart';
 import 'package:per_habit/features/habit/presentation/widgets/personality_selector.dart';
 
-// 👇 Quitamos el enum PetType (volvemos a DB):
-// import 'package:per_habit/features/habit/domain/entities/pet_type.dart';
+import 'package:per_habit/core/config/models/pet_type_model.dart';
+import 'package:per_habit/core/config/models/personality_model.dart';
+import 'package:per_habit/core/config/providers/config_provider.dart'; // userInventoryStreamProvider, petTypesProvider, personalitiesProvider
+import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart'; // authControllerProvider
 
 enum FrequencyPeriod { day, week }
 
@@ -34,14 +35,14 @@ class HabitForm extends ConsumerStatefulWidget {
 }
 
 class _HabitFormState extends ConsumerState<HabitForm> {
+  static const String kFreePetId = 'teddy';
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
-  // Volvemos a usar modelos del backend:
   PetTypeModel? selectedPet;
   PersonalityModel? selectedPersonality;
 
-  // Frecuencia
   FrequencyPeriod period = FrequencyPeriod.day; // 'day' | 'week'
   int frequencyCount = 1; // veces por día/semana
   List<TimeOfDay> selectedTimes = [const TimeOfDay(hour: 8, minute: 0)];
@@ -54,12 +55,9 @@ class _HabitFormState extends ConsumerState<HabitForm> {
     final habit = widget.initialHabit;
     if (habit != null) {
       _nameController.text = habit.name;
-
-      // Lee periodo y cantidades existentes (si el campo no existía, por default 'day')
       period = FrequencyPeriodX.fromString(habit.frequencyPeriod);
       frequencyCount = habit.frequencyCount;
 
-      // Solo usamos horas si es por día
       if (period == FrequencyPeriod.day && habit.scheduleTimes.isNotEmpty) {
         selectedTimes =
             habit.scheduleTimes.map((s) {
@@ -72,9 +70,6 @@ class _HabitFormState extends ConsumerState<HabitForm> {
       } else {
         selectedTimes = [const TimeOfDay(hour: 8, minute: 0)];
       }
-
-      // NOTA: en edición, mascota y personalidad se desactivan, así que no es necesario
-      // pre-cargar selectedPet/selectedPersonality desde el provider aquí.
     }
 
     _syncTimesWithCount(); // evita RangeError
@@ -102,13 +97,27 @@ class _HabitFormState extends ConsumerState<HabitForm> {
     super.dispose();
   }
 
-  void _submit() async {
+  bool _isPetAllowed(Set<String> allowedIds, String petId) {
+    return petId == kFreePetId || allowedIds.contains(petId);
+  }
+
+  Future<void> _submit(Set<String> allowedIds) async {
     if (!_formKey.currentState!.validate()) return;
 
     // En creación exigimos mascota y personalidad
     if (!isEdit && (selectedPet == null || selectedPersonality == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecciona mascota y personalidad')),
+      );
+      return;
+    }
+
+    // Validar que la mascota esté permitida (inventario o teddy gratis)
+    if (!isEdit && !_isPetAllowed(allowedIds, selectedPet!.id)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No tienes esa mascota en tu inventario.'),
+        ),
       );
       return;
     }
@@ -127,7 +136,7 @@ class _HabitFormState extends ConsumerState<HabitForm> {
       id: widget.initialHabit?.id ?? const Uuid().v4(),
       name: _nameController.text.trim(),
       petType: isEdit ? widget.initialHabit!.petType : selectedPet!.id,
-      goal: frequencyCount, // si lo usas, mantenlo en sync con frequencyCount
+      goal: frequencyCount,
       progress: widget.initialHabit?.progress ?? 0,
       life: widget.initialHabit?.life ?? 100,
       points: widget.initialHabit?.points ?? 0,
@@ -139,11 +148,8 @@ class _HabitFormState extends ConsumerState<HabitForm> {
       lastCompletedDate: widget.initialHabit?.lastCompletedDate,
       roomId: widget.roomId,
       createdAt: widget.initialHabit?.createdAt ?? DateTime.now(),
-
-      // Frecuencia flexible
-      frequencyCount: frequencyCount, // veces por día/semana
-      frequencyPeriod:
-          period.id, // 'day' | 'week' (agrega el campo en tu modelo/mapper)
+      frequencyCount: frequencyCount,
+      frequencyPeriod: period.id, // 'day' | 'week'
       scheduleTimes: scheduleTimes, // vacío si 'week'
     );
 
@@ -157,9 +163,84 @@ class _HabitFormState extends ConsumerState<HabitForm> {
     if (mounted) Navigator.pop(context);
   }
 
+  /// Crea mascota + personalidad al azar usando lo disponible
+  Future<void> _createRandom(Set<String> allowedIds) async {
+    if (!_formKey.currentState!.validate()) {
+      // Requiere al menos el nombre
+      return;
+    }
+
+    try {
+      // 1) Traer petTypes disponibles (DB) y filtrarlos por allowedIds/teddy
+      final petTypes = await ref.read(
+        petTypesProvider.future,
+      ); // disponibles: true
+      final pool =
+          petTypes.where((p) => _isPetAllowed(allowedIds, p.id)).toList();
+      if (pool.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No tienes mascotas disponibles aún.')),
+        );
+        return;
+      }
+
+      // 2) Personalidades
+      final personalities = await ref.read(personalitiesProvider.future);
+      if (personalities.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No hay personalidades configuradas.')),
+        );
+        return;
+      }
+
+      final rnd = Random();
+      final pet = pool[rnd.nextInt(pool.length)];
+      final pers = personalities[rnd.nextInt(personalities.length)];
+
+      setState(() {
+        selectedPet = pet;
+        selectedPersonality = pers;
+      });
+
+      // 3) Crear directamente con la selección aleatoria
+      await _submit(allowedIds);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error creando al azar: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final disabledInEdit = isEdit; // deshabilitar selección en edición
+    final disabledInEdit = isEdit;
+
+    // Usuario actual (para leer inventario)
+    final user = ref.watch(authControllerProvider).user;
+    final uid = user?.uid ?? '';
+
+    // Inventario por stream (actualiza en vivo)
+    final invAsync =
+        uid.isEmpty
+            ? const AsyncValue<List<dynamic>>.data(const [])
+            : ref.watch(userInventoryStreamProvider(uid));
+
+    // Construir set de mascotas permitidas desde inventario + teddy gratis
+    final allowedPetIds = <String>{
+      kFreePetId, // siempre disponible
+      ...invAsync.maybeWhen(
+        data:
+            (items) =>
+                items
+                    .where(
+                      (it) => (it.category == 'mascota') && (it.cantidad > 0),
+                    )
+                    .map((it) => it.id)
+                    .cast<String>(),
+        orElse: () => const <String>[],
+      ),
+    };
 
     return Form(
       key: _formKey,
@@ -179,8 +260,30 @@ class _HabitFormState extends ConsumerState<HabitForm> {
           // Mascota (desde DB; deshabilitada en edición)
           PetTypeSelector(
             selected: selectedPet,
-            onSelected: (p) => setState(() => selectedPet = p),
+            onSelected: (p) {
+              if (!disabledInEdit && !_isPetAllowed(allowedPetIds, p.id)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Esta mascota no está en tu inventario. Gánala/compra para usarla.',
+                    ),
+                  ),
+                );
+                return;
+              }
+              setState(() => selectedPet = p);
+            },
             enabled: !disabledInEdit,
+          ),
+          const SizedBox(height: 6),
+          invAsync.when(
+            data:
+                (_) => Text(
+                  'Puedes crear hábitos con: ${allowedPetIds.join(', ')}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            loading: () => const Text('Cargando inventario…'),
+            error: (_, __) => const Text('Inventario no disponible'),
           ),
           const SizedBox(height: 16),
 
@@ -210,15 +313,12 @@ class _HabitFormState extends ConsumerState<HabitForm> {
             onSelectionChanged: (s) {
               setState(() {
                 period = s.first;
-
-                // (Opcional) límites máximos visuales
                 if (period == FrequencyPeriod.day && frequencyCount > 5) {
                   frequencyCount = 5;
                 }
                 if (period == FrequencyPeriod.week && frequencyCount > 14) {
                   frequencyCount = 14;
                 }
-
                 _syncTimesWithCount();
               });
             },
@@ -237,13 +337,13 @@ class _HabitFormState extends ConsumerState<HabitForm> {
               if (value == null) return;
               setState(() {
                 frequencyCount = value;
-                _syncTimesWithCount(); // evita RangeError al pintar horas
+                _syncTimesWithCount();
               });
             },
             items:
                 (period == FrequencyPeriod.day
-                        ? List.generate(5, (i) => i + 1) // 1..5 por día
-                        : List.generate(14, (i) => i + 1)) // 1..14 por semana
+                        ? List.generate(5, (i) => i + 1)
+                        : List.generate(14, (i) => i + 1))
                     .map((n) => DropdownMenuItem(value: n, child: Text('$n')))
                     .toList(),
           ),
@@ -253,7 +353,6 @@ class _HabitFormState extends ConsumerState<HabitForm> {
             const SizedBox(height: 8),
             Column(
               children: List.generate(
-                // “cinturón y tirantes” por si algo quedó desfasado un frame
                 (frequencyCount <= selectedTimes.length)
                     ? frequencyCount
                     : selectedTimes.length,
@@ -282,10 +381,27 @@ class _HabitFormState extends ConsumerState<HabitForm> {
           ],
 
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: Icon(isEdit ? Icons.save : Icons.add),
-            label: Text(isEdit ? 'Guardar cambios' : 'Crear hábito'),
-            onPressed: _submit,
+
+          // Botones de acción
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  icon: Icon(isEdit ? Icons.save : Icons.add),
+                  label: Text(isEdit ? 'Guardar cambios' : 'Crear hábito'),
+                  onPressed: () => _submit(allowedPetIds),
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (!isEdit)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.casino),
+                    label: const Text('Crear con aleatorio'),
+                    onPressed: () => _createRandom(allowedPetIds),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
