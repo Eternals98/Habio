@@ -1,4 +1,3 @@
-// lib/features/game/components/habit_pet_component.dart
 // ignore_for_file: deprecated_member_use
 import 'dart:math';
 
@@ -8,7 +7,6 @@ import 'package:flutter/material.dart';
 
 import 'package:per_habit/features/game/components/pet/pet_anim.dart';
 import 'package:per_habit/features/game/components/pet/pet_tracker.dart';
-import 'package:per_habit/features/game/components/pet/pet_types.dart';
 import 'package:per_habit/features/game/components/pet/pet_visual.dart';
 import 'package:per_habit/features/game/habio_game.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
@@ -17,8 +15,8 @@ import 'package:per_habit/features/habit/presentation/screens/edit_habit_screen.
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
   // ---------- Datos del hábito ----------
-  final String habitId;
-  final PetType petType; // <- enum
+  final Habit habit; // <- guardamos el Habit completo
+  String get habitId => habit.id; // helper para no tocar el resto del código
   String name;
   int level;
   final String frequencyPeriod; // 'day' | 'week'
@@ -66,8 +64,7 @@ class HabitPetComponent extends PositionComponent
   double? _timer; // celebrate / land / dead
 
   HabitPetComponent.fromHabit(Habit h, this.groundY)
-    : habitId = h.id,
-      petType = PetType.fromString(h.petType), // <- mapea string -> enum
+    : habit = h,
       name = h.name,
       level = h.level,
       frequencyPeriod = h.frequencyPeriod ?? 'day',
@@ -116,10 +113,13 @@ class HabitPetComponent extends PositionComponent
   // ------ load ------
   @override
   Future<void> onLoad() async {
-    // 🔁 Crea el visual usando la ruta del enum (sin leer nada de la DB)
-    _visual = await PetVisual.create(
+    // Convención: usa el petType como id para construir el path
+    final petId = habit.petType.trim().toLowerCase();
+    final imagePath = 'pets/${petId}_full.png';
+
+    _visual = await PetVisual.createFromPath(
       images: gameRef.images,
-      petType: petType, // <- enum con imagePath correcto
+      imagePath: imagePath,
       petSize: petSize,
       cols: cols,
       rows: rows,
@@ -290,7 +290,7 @@ class HabitPetComponent extends PositionComponent
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Mascota: ${petType.name}'), // <- nombre del enum
+                Text('Mascota: ${habit.petType}'),
                 Text('Nivel: $level'),
                 const SizedBox(height: 8),
                 Text('Faltas: ${_period.failCount}'),
@@ -310,7 +310,7 @@ class HabitPetComponent extends PositionComponent
                   final editable = Habit(
                     id: habitId,
                     name: name,
-                    petType: petType.name, // <- guardamos el id del enum
+                    petType: habit.petType, // guardamos el id como string
                     goal: frequencyCount,
                     progress: 0,
                     life: 100,

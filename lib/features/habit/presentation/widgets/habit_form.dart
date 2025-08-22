@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:per_habit/features/game/components/pet/pet_types.dart';
 import 'package:per_habit/features/habit/presentation/controllers/habit_provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:per_habit/core/config/models/pet_type_model.dart';
@@ -127,10 +126,7 @@ class _HabitFormState extends ConsumerState<HabitForm> {
     final habit = Habit(
       id: widget.initialHabit?.id ?? const Uuid().v4(),
       name: _nameController.text.trim(),
-      petType:
-          isEdit
-              ? widget.initialHabit!.petType
-              : PetType.fromString(selectedPet!.id).name,
+      petType: isEdit ? widget.initialHabit!.petType : selectedPet!.id,
       goal: frequencyCount, // si lo usas, mantenlo en sync con frequencyCount
       progress: widget.initialHabit?.progress ?? 0,
       life: widget.initialHabit?.life ?? 100,
