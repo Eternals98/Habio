@@ -368,7 +368,7 @@ class _CatalogTab extends ConsumerWidget {
                         final svc = ref.read(catalogItemServiceProvider);
                         if (isEdit) {
                           final updated = CatalogItemModel(
-                            id: item!.id,
+                            id: item.id,
                             nombre: nombreCtrl.text.trim(),
                             descripcion: descCtrl.text.trim(),
                             icono: iconoCtrl.text.trim(),
@@ -703,7 +703,7 @@ class _ShopTab extends ConsumerWidget {
                         final model = ShopItemModel(
                           id:
                               isEdit
-                                  ? item!.id
+                                  ? item.id
                                   : (nameCtrl.text
                                       .trim()
                                       .toLowerCase()
@@ -918,7 +918,7 @@ Future<void> showPetTypeDialog(
 
                       if (isEdit) {
                         final updated = PetTypeModel(
-                          id: pet!.id,
+                          id: pet.id,
                           name: nameCtrl.text.trim(),
                           description: descCtrl.text.trim(),
                           image: imageCtrl.text.trim(),
