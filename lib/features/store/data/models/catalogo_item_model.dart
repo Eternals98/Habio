@@ -1,4 +1,3 @@
-// lib/features/inventary/data/models/catalog_item_model.dart
 class CatalogItemModel {
   final String id;
   final String nombre;
@@ -7,12 +6,18 @@ class CatalogItemModel {
   final String
   category; // 'fondo' | 'decoracion' | 'alimento' | 'accesorio' | 'mascota'
 
+  // ⬇️ NUEVO
+  final bool wheelEnabled; // participa en la ruleta
+  final int wheelWeight; // peso/probabilidad relativa (>=1)
+
   CatalogItemModel({
     required this.id,
     required this.nombre,
     required this.descripcion,
     required this.icono,
     required this.category,
+    this.wheelEnabled = false,
+    this.wheelWeight = 1,
   });
 
   factory CatalogItemModel.fromMap(Map<String, dynamic> map) {
@@ -22,6 +27,8 @@ class CatalogItemModel {
       descripcion: map['descripcion'] ?? '',
       icono: map['icono'] ?? '',
       category: map['category'] ?? 'unknown',
+      wheelEnabled: map['wheelEnabled'] as bool? ?? false,
+      wheelWeight: (map['wheelWeight'] as num?)?.toInt() ?? 1,
     );
   }
 
@@ -32,6 +39,8 @@ class CatalogItemModel {
       'descripcion': descripcion,
       'icono': icono,
       'category': category,
+      'wheelEnabled': wheelEnabled,
+      'wheelWeight': wheelWeight,
     };
   }
 
@@ -41,6 +50,8 @@ class CatalogItemModel {
     String? descripcion,
     String? icono,
     String? category,
+    bool? wheelEnabled,
+    int? wheelWeight,
   }) {
     return CatalogItemModel(
       id: id ?? this.id,
@@ -48,6 +59,8 @@ class CatalogItemModel {
       descripcion: descripcion ?? this.descripcion,
       icono: icono ?? this.icono,
       category: category ?? this.category,
+      wheelEnabled: wheelEnabled ?? this.wheelEnabled,
+      wheelWeight: wheelWeight ?? this.wheelWeight,
     );
   }
 }

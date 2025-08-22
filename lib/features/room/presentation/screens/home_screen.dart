@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/room/presentation/controllers/room_providers.dart';
+import 'package:per_habit/features/room/presentation/screens/spin_wheel_dialog.dart';
 import 'package:per_habit/features/room/presentation/widgets/create_room_dialog.dart';
 import 'package:per_habit/features/room/presentation/widgets/room_carousel.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
@@ -53,7 +55,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-        actions: const [AppBarActions()],
+        actions: [
+          IconButton(
+            tooltip: 'Ruleta',
+            icon: const Icon(Icons.casino),
+            onPressed:
+                user == null
+                    ? null
+                    : () => SpinWheelDialog.show(context, ref, user.uid),
+          ),
+          const AppBarActions(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _createRoom,

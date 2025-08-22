@@ -97,78 +97,43 @@ class InventoryItemService {
 class CatalogItemService {
   final FirebaseFirestore db;
   final String collectionPath;
+  CatalogItemService({required this.db, required this.collectionPath});
 
-  CatalogItemService({required this.db, this.collectionPath = 'catalogItems'});
-
-  String _slug(String input) {
-    return input
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9\s_-]'), '')
-        .replaceAll(RegExp(r'\s+'), '-')
-        .replaceAll(RegExp(r'-+'), '-')
-        .trim();
+  Stream<List<CatalogItemModel>> watch() {
+    return db.collection(collectionPath).snapshots().map((s) {
+      return s.docs.map((d) => CatalogItemModel.fromMap(d.data())).toList();
+    });
   }
 
-  CollectionReference<Map<String, dynamic>> get _col =>
-      db.collection(collectionPath);
-
-  Future<String> create({
-    String? id,
+  Future<void> create({
     required String nombre,
     required String descripcion,
     required String icono,
     required String category,
+    bool wheelEnabled = false,
+    int wheelWeight = 1,
   }) async {
-    final docId = id?.trim().isNotEmpty == true ? id!.trim() : _slug(nombre);
-    final ref = _col.doc(docId);
+    final doc = db.collection(collectionPath).doc();
     final model = CatalogItemModel(
-      id: docId,
+      id: doc.id,
       nombre: nombre,
       descripcion: descripcion,
       icono: icono,
       category: category,
+      wheelEnabled: wheelEnabled,
+      wheelWeight: wheelWeight < 1 ? 1 : wheelWeight,
     );
-    await ref.set(model.toMap());
-    return docId;
+    await doc.set(model.toMap());
   }
 
-  Future<void> update(String id, CatalogItemModel model) async {
-    await _col.doc(id).update(model.toMap());
+  Future<void> update(String id, CatalogItemModel m) async {
+    await db
+        .collection(collectionPath)
+        .doc(id)
+        .set(m.toMap(), SetOptions(merge: true));
   }
 
   Future<void> delete(String id) async {
-    await _col.doc(id).delete();
-  }
-
-  Future<CatalogItemModel?> getById(String id) async {
-    final snap =
-        await _col.doc(id).get(); // DocumentSnapshot<Map<String, dynamic>>
-    if (!snap.exists || snap.data() == null) return null;
-    final data = snap.data()!..['id'] = snap.id;
-    return CatalogItemModel.fromMap(data);
-  }
-
-  Future<List<CatalogItemModel>> list({String? category}) async {
-    Query<Map<String, dynamic>> q = _col;
-    if (category != null && category.isNotEmpty) {
-      q = q.where('category', isEqualTo: category);
-    }
-    final res = await q.get(); // QuerySnapshot<Map<String, dynamic>>
-    return res.docs
-        .map((d) => CatalogItemModel.fromMap(d.data()..['id'] = d.id))
-        .toList();
-  }
-
-  Stream<List<CatalogItemModel>> watch({String? category}) {
-    Query<Map<String, dynamic>> q = _col;
-    if (category != null && category.isNotEmpty) {
-      q = q.where('category', isEqualTo: category);
-    }
-    return q.snapshots().map(
-      (s) =>
-          s.docs
-              .map((d) => CatalogItemModel.fromMap(d.data()..['id'] = d.id))
-              .toList(),
-    );
+    await db.collection(collectionPath).doc(id).delete();
   }
 }
