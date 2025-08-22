@@ -1,5 +1,3 @@
-import 'package:per_habit/features/habit/domain/entities/habit.dart';
-
 class Room {
   final String id;
   final String name;

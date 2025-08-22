@@ -6,4 +6,7 @@ abstract class ShopRepository {
   Future<void> purchaseShopItem(String userId, ShopItem shopItem);
   Future<void> purchaseHabiPoints(String userId, int amount);
   Future<UserProfile> getUser(String userId);
+
+  // 👇 NUEVO
+  Stream<UserProfile> watchUser(String userId);
 }

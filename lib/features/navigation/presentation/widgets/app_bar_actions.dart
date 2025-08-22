@@ -11,10 +11,13 @@ class AppBarActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authControllerProvider);
     final userId = authState.user?.uid;
+
+    // 👇 AHORA usamos el StreamProvider para actualización en tiempo real
     final userState =
-        userId != null
-            ? ref.watch(userProvider(userId))
+        (userId != null)
+            ? ref.watch(userStreamProvider(userId))
             : const AsyncValue.loading();
+
     final currentLocation = ModalRoute.of(context)?.settings.name;
 
     return Row(
@@ -31,8 +34,20 @@ class AppBarActions extends ConsumerWidget {
                   ),
                 ),
               ),
-          loading: () => const CircularProgressIndicator(),
-          error: (_, __) => const Text('Error'),
+          loading:
+              () => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+          error:
+              (_, __) => const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text('HP --'),
+              ),
         ),
         IconButton(
           icon: const Icon(Icons.person),

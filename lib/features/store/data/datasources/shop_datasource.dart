@@ -17,6 +17,9 @@ abstract class ShopDatasource {
   Future<void> purchaseShopItem(String userId, ShopItemModel shopItem);
   Future<void> purchaseHabiPoints(String userId, int amount);
   Future<UserProfileModel> getUser(String userId);
+
+  /// 🔴 Para UI en tiempo real (HabiPoints y demás campos del usuario)
+  Stream<UserProfileModel> watchUser(String userId);
 }
 
 class ShopDatasourceImpl implements ShopDatasource {
@@ -37,6 +40,34 @@ class ShopDatasourceImpl implements ShopDatasource {
   }
 
   @override
+  Stream<UserProfileModel> watchUser(String userId) {
+    return firestore.collection('users').doc(userId).snapshots().map((snap) {
+      if (!snap.exists) {
+        throw Exception('Usuario no encontrado');
+      }
+      return UserProfileModel.fromMap(snap.data()!, userId);
+    });
+  }
+
+  @override
+  Future<UserProfileModel> getUser(String userId) async {
+    final doc = await firestore.collection('users').doc(userId).get();
+    if (!doc.exists) throw Exception('Usuario no encontrado');
+    return UserProfileModel.fromMap(doc.data()!, userId);
+  }
+
+  @override
+  Future<void> purchaseHabiPoints(String userId, int amount) async {
+    final userRef = firestore.collection('users').doc(userId);
+    await firestore.runTransaction((tx) async {
+      final snap = await tx.get(userRef);
+      if (!snap.exists) throw Exception('Usuario no encontrado');
+      final user = UserProfileModel.fromMap(snap.data()!, userId);
+      tx.update(userRef, {'habipoints': user.habipoints + amount});
+    });
+  }
+
+  @override
   Future<void> purchaseShopItem(String userId, ShopItemModel shopItem) async {
     final userRef = firestore.collection('users').doc(userId);
 
@@ -54,29 +85,89 @@ class ShopDatasourceImpl implements ShopDatasource {
       // Lee inventario actual (puede venir vacío)
       final invMap =
           (userSnap.data()!['inventario'] as Map<String, dynamic>?) ?? {};
-      InventarioModel inventario = InventarioModel.fromMap(invMap);
+      final inventario = InventarioModel.fromMap(invMap);
 
-      // Copias mutables de las listas (tipadas)
-      final List<MascotaModel> mascotas = List<MascotaModel>.from(
-        inventario.mascotas,
-      );
-      final List<AlimentoModel> alimentos = List<AlimentoModel>.from(
-        inventario.alimentos,
-      );
-      final List<AccesorioModel> accesorios = List<AccesorioModel>.from(
-        inventario.accesorios,
-      );
-      final List<DecoracionModel> decoraciones = List<DecoracionModel>.from(
-        inventario.decoraciones,
-      );
-      final List<FondoModel> fondos = List<FondoModel>.from(inventario.fondos);
+      // Pasamos listas a mapas para merges O(1) por id
+      final mascotasMap = <String, MascotaModel>{
+        for (final m in inventario.mascotas)
+          if (m is MascotaModel)
+            m.id: m
+          else
+            m.id: MascotaModel(
+              id: m.id,
+              nombre: m.nombre,
+              descripcion: m.descripcion,
+              icono: m.icono,
+              cantidad: m.cantidad,
+              category: 'mascota',
+            ),
+      };
+
+      final alimentosMap = <String, AlimentoModel>{
+        for (final a in inventario.alimentos)
+          if (a is AlimentoModel)
+            a.id: a
+          else
+            a.id: AlimentoModel(
+              id: a.id,
+              nombre: a.nombre,
+              descripcion: a.descripcion,
+              icono: a.icono,
+              cantidad: a.cantidad,
+              category: 'alimento',
+            ),
+      };
+
+      final accesoriosMap = <String, AccesorioModel>{
+        for (final a in inventario.accesorios)
+          if (a is AccesorioModel)
+            a.id: a
+          else
+            a.id: AccesorioModel(
+              id: a.id,
+              nombre: a.nombre,
+              descripcion: a.descripcion,
+              icono: a.icono,
+              cantidad: a.cantidad,
+              category: 'accesorio',
+            ),
+      };
+
+      final decoracionesMap = <String, DecoracionModel>{
+        for (final d in inventario.decoraciones)
+          if (d is DecoracionModel)
+            d.id: d
+          else
+            d.id: DecoracionModel(
+              id: d.id,
+              nombre: d.nombre,
+              descripcion: d.descripcion,
+              icono: d.icono,
+              cantidad: d.cantidad,
+              category: 'decoracion',
+            ),
+      };
+
+      final fondosMap = <String, FondoModel>{
+        for (final f in inventario.fondos)
+          if (f is FondoModel)
+            f.id: f
+          else
+            f.id: FondoModel(
+              id: f.id,
+              nombre: f.nombre,
+              descripcion: f.descripcion,
+              icono: f.icono,
+              cantidad: f.cantidad,
+              category: 'fondo',
+            ),
+      };
 
       // Helpers de merge por tipo (sin cast genérico)
       void mergeMascota(ItemModel base) {
-        final idx = mascotas.indexWhere((e) => e.id == base.id);
-        if (idx >= 0) {
-          final prev = mascotas[idx];
-          mascotas[idx] = MascotaModel(
+        final prev = mascotasMap[base.id];
+        if (prev != null) {
+          mascotasMap[base.id] = MascotaModel(
             id: prev.id,
             nombre: prev.nombre,
             descripcion: prev.descripcion,
@@ -85,24 +176,21 @@ class ShopDatasourceImpl implements ShopDatasource {
             category: 'mascota',
           );
         } else {
-          mascotas.add(
-            MascotaModel(
-              id: base.id,
-              nombre: base.nombre,
-              descripcion: base.descripcion,
-              icono: base.icono,
-              cantidad: base.cantidad,
-              category: 'mascota',
-            ),
+          mascotasMap[base.id] = MascotaModel(
+            id: base.id,
+            nombre: base.nombre,
+            descripcion: base.descripcion,
+            icono: base.icono,
+            cantidad: base.cantidad,
+            category: 'mascota',
           );
         }
       }
 
       void mergeAlimento(ItemModel base) {
-        final idx = alimentos.indexWhere((e) => e.id == base.id);
-        if (idx >= 0) {
-          final prev = alimentos[idx];
-          alimentos[idx] = AlimentoModel(
+        final prev = alimentosMap[base.id];
+        if (prev != null) {
+          alimentosMap[base.id] = AlimentoModel(
             id: prev.id,
             nombre: prev.nombre,
             descripcion: prev.descripcion,
@@ -111,24 +199,21 @@ class ShopDatasourceImpl implements ShopDatasource {
             category: 'alimento',
           );
         } else {
-          alimentos.add(
-            AlimentoModel(
-              id: base.id,
-              nombre: base.nombre,
-              descripcion: base.descripcion,
-              icono: base.icono,
-              cantidad: base.cantidad,
-              category: 'alimento',
-            ),
+          alimentosMap[base.id] = AlimentoModel(
+            id: base.id,
+            nombre: base.nombre,
+            descripcion: base.descripcion,
+            icono: base.icono,
+            cantidad: base.cantidad,
+            category: 'alimento',
           );
         }
       }
 
       void mergeAccesorio(ItemModel base) {
-        final idx = accesorios.indexWhere((e) => e.id == base.id);
-        if (idx >= 0) {
-          final prev = accesorios[idx];
-          accesorios[idx] = AccesorioModel(
+        final prev = accesoriosMap[base.id];
+        if (prev != null) {
+          accesoriosMap[base.id] = AccesorioModel(
             id: prev.id,
             nombre: prev.nombre,
             descripcion: prev.descripcion,
@@ -137,24 +222,21 @@ class ShopDatasourceImpl implements ShopDatasource {
             category: 'accesorio',
           );
         } else {
-          accesorios.add(
-            AccesorioModel(
-              id: base.id,
-              nombre: base.nombre,
-              descripcion: base.descripcion,
-              icono: base.icono,
-              cantidad: base.cantidad,
-              category: 'accesorio',
-            ),
+          accesoriosMap[base.id] = AccesorioModel(
+            id: base.id,
+            nombre: base.nombre,
+            descripcion: base.descripcion,
+            icono: base.icono,
+            cantidad: base.cantidad,
+            category: 'accesorio',
           );
         }
       }
 
       void mergeDecoracion(ItemModel base) {
-        final idx = decoraciones.indexWhere((e) => e.id == base.id);
-        if (idx >= 0) {
-          final prev = decoraciones[idx];
-          decoraciones[idx] = DecoracionModel(
+        final prev = decoracionesMap[base.id];
+        if (prev != null) {
+          decoracionesMap[base.id] = DecoracionModel(
             id: prev.id,
             nombre: prev.nombre,
             descripcion: prev.descripcion,
@@ -163,24 +245,21 @@ class ShopDatasourceImpl implements ShopDatasource {
             category: 'decoracion',
           );
         } else {
-          decoraciones.add(
-            DecoracionModel(
-              id: base.id,
-              nombre: base.nombre,
-              descripcion: base.descripcion,
-              icono: base.icono,
-              cantidad: base.cantidad,
-              category: 'decoracion',
-            ),
+          decoracionesMap[base.id] = DecoracionModel(
+            id: base.id,
+            nombre: base.nombre,
+            descripcion: base.descripcion,
+            icono: base.icono,
+            cantidad: base.cantidad,
+            category: 'decoracion',
           );
         }
       }
 
       void mergeFondo(ItemModel base) {
-        final idx = fondos.indexWhere((e) => e.id == base.id);
-        if (idx >= 0) {
-          final prev = fondos[idx];
-          fondos[idx] = FondoModel(
+        final prev = fondosMap[base.id];
+        if (prev != null) {
+          fondosMap[base.id] = FondoModel(
             id: prev.id,
             nombre: prev.nombre,
             descripcion: prev.descripcion,
@@ -189,15 +268,13 @@ class ShopDatasourceImpl implements ShopDatasource {
             category: 'fondo',
           );
         } else {
-          fondos.add(
-            FondoModel(
-              id: base.id,
-              nombre: base.nombre,
-              descripcion: base.descripcion,
-              icono: base.icono,
-              cantidad: base.cantidad,
-              category: 'fondo',
-            ),
+          fondosMap[base.id] = FondoModel(
+            id: base.id,
+            nombre: base.nombre,
+            descripcion: base.descripcion,
+            icono: base.icono,
+            cantidad: base.cantidad,
+            category: 'fondo',
           );
         }
       }
@@ -227,38 +304,22 @@ class ShopDatasourceImpl implements ShopDatasource {
         }
       }
 
-      // Guarda inventario y descuenta puntos
+      // Convierte mapas a listas
       final updatedInventario = InventarioModel(
         userId: userId,
-        mascotas: mascotas,
-        alimentos: alimentos,
-        accesorios: accesorios,
-        decoraciones: decoraciones,
-        fondos: fondos,
+        mascotas: mascotasMap.values.toList(),
+        alimentos: alimentosMap.values.toList(),
+        accesorios: accesoriosMap.values.toList(),
+        decoraciones: decoracionesMap.values.toList(),
+        fondos: fondosMap.values.toList(),
       );
 
+      final newBalance = user.habipoints - shopItem.price;
+
       tx.update(userRef, {
-        'habipoints': user.habipoints - shopItem.price,
+        'habipoints': newBalance,
         'inventario': updatedInventario.toMap(),
       });
     });
-  }
-
-  @override
-  Future<void> purchaseHabiPoints(String userId, int amount) async {
-    final userRef = firestore.collection('users').doc(userId);
-    await firestore.runTransaction((tx) async {
-      final snap = await tx.get(userRef);
-      if (!snap.exists) throw Exception('Usuario no encontrado');
-      final user = UserProfileModel.fromMap(snap.data()!, userId);
-      tx.update(userRef, {'habipoints': user.habipoints + amount});
-    });
-  }
-
-  @override
-  Future<UserProfileModel> getUser(String userId) async {
-    final doc = await firestore.collection('users').doc(userId).get();
-    if (!doc.exists) throw Exception('Usuario no encontrado');
-    return UserProfileModel.fromMap(doc.data()!, userId);
   }
 }

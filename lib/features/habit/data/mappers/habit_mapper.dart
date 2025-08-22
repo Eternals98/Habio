@@ -28,9 +28,7 @@ class HabitMapper {
   static HabitModel toModel(Habit entity) {
     // ------- Defaults a prueba de nulls -------
     final String baseStatus =
-        (entity.baseStatus == null || entity.baseStatus!.isEmpty)
-            ? 'happy'
-            : entity.baseStatus!;
+        (entity.baseStatus.isEmpty) ? 'happy' : entity.baseStatus;
 
     final String tempStatus = entity.tempStatus ?? '';
 
@@ -39,7 +37,7 @@ class HabitMapper {
             ? 'day'
             : entity.frequencyPeriod!;
 
-    final List<String> scheduleTimes = entity.scheduleTimes ?? const <String>[];
+    final List<String> scheduleTimes = entity.scheduleTimes;
 
     // (Si alguno de estos pudiera venir null en tu Entity, también dales default:)
     final String id = entity.id; // asume no nulo
