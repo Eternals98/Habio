@@ -1,37 +1,58 @@
+// lib/features/inventary/presentation/screens/inventary_screen.dart
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:per_habit/features/inventary/domain/entities/inventory.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/features/inventary/presentation/controllers/inventary_provider.dart';
 import 'package:per_habit/features/inventary/presentation/widgets/item_list.dart';
 import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 
-class InventaryScreen extends StatefulWidget {
-  final Inventario inventario;
-
-  const InventaryScreen({super.key, required this.inventario});
+class InventaryScreen extends ConsumerStatefulWidget {
+  const InventaryScreen({super.key});
 
   @override
-  State<InventaryScreen> createState() => _InventaryScreenState();
+  ConsumerState<InventaryScreen> createState() => _InventaryScreenState();
 }
 
-class _InventaryScreenState extends State<InventaryScreen> {
+class _InventaryScreenState extends ConsumerState<InventaryScreen> {
   String? _selectedCategory;
+  String? _boundUserId;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && uid != _boundUserId) {
+      _boundUserId = uid;
+      // Suscríbete al inventario del usuario
+      ref.read(inventoryControllerProvider.notifier).listenToInventory(uid);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(inventoryControllerProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventario'),
-        actions: [AppBarActions()],
+        actions: const [AppBarActions()],
       ),
-      body: Column(
-        children: [
-          _buildCategoryButtons(),
-          Expanded(
-            child: ItemList(
-              inventario: widget.inventario,
-              selectedCategory: _selectedCategory,
-            ),
-          ),
-        ],
+      body: state.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('Error: $e')),
+        data: (inventario) {
+          return Column(
+            children: [
+              _buildCategoryButtons(),
+              Expanded(
+                child: ItemList(
+                  inventario: inventario,
+                  selectedCategory: _selectedCategory,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -58,11 +79,7 @@ class _InventaryScreenState extends State<InventaryScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4.0),
       child: ElevatedButton(
-        onPressed: () {
-          setState(() {
-            _selectedCategory = category;
-          });
-        },
+        onPressed: () => setState(() => _selectedCategory = category),
         style: ElevatedButton.styleFrom(
           backgroundColor: isSelected ? Theme.of(context).primaryColor : null,
           foregroundColor: isSelected ? Colors.white : null,
