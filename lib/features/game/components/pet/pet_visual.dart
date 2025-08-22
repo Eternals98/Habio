@@ -1,10 +1,9 @@
-// lib/features/game/pet/pet_visual.dart
+// lib/features/game/components/pet/pet_visual.dart
 import 'dart:math';
-
 import 'package:flame/components.dart';
 import 'package:flame/cache.dart';
 import 'package:per_habit/features/game/components/pet/pet_anim.dart';
-import 'package:per_habit/features/habit/domain/entities/pet_type.dart';
+import 'package:per_habit/features/game/components/pet/pet_types.dart';
 
 class PetVisual {
   const PetVisual._();
@@ -14,7 +13,7 @@ class PetVisual {
     required PetType petType,
     required double petSize,
 
-    // Constantes (se pasan desde el componente para no cambiar el comportamiento)
+    // Constantes
     required int cols,
     required int rows,
     required double idleStep,
@@ -26,7 +25,9 @@ class PetVisual {
     required double celebrateStep,
     required double deadStep,
   }) async {
-    final image = await images.load(petType.imagePath);
+    // 🔹 Cargamos la ruta exacta del enum
+    final imagePath = petType.imagePath;
+    final image = await images.load(imagePath);
 
     final frameW = (image.width / cols).floor();
     final frameH = (image.height / rows).floor();
@@ -55,8 +56,7 @@ class PetVisual {
       return SpriteAnimation.spriteList(sprites, stepTime: step, loop: loop);
     }
 
-    // filas (0-based):
-    // 0 idle1, 1 idle2, 2 walk, 3 carry(air+land), 4 hurt/dizzy, 5 dead, 6 celebrate
+    // Animaciones
     final idle = _rowAnim(row: 0, start: 0, amount: cols - 5, step: idleStep);
     final idleBlink = _rowAnim(
       row: 1,

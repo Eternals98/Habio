@@ -1,37 +1,39 @@
+// lib/features/game/components/habit_pet_component.dart
 // ignore_for_file: deprecated_member_use
 import 'dart:math';
 
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/material.dart';
+
 import 'package:per_habit/features/game/components/pet/pet_anim.dart';
 import 'package:per_habit/features/game/components/pet/pet_tracker.dart';
+import 'package:per_habit/features/game/components/pet/pet_types.dart';
 import 'package:per_habit/features/game/components/pet/pet_visual.dart';
 import 'package:per_habit/features/game/habio_game.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
-import 'package:per_habit/features/habit/domain/entities/pet_type.dart';
 import 'package:per_habit/features/habit/presentation/screens/edit_habit_screen.dart';
 
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
   // ---------- Datos del hábito ----------
   final String habitId;
-  final PetType petType;
+  final PetType petType; // <- enum
   String name;
   int level;
   final String frequencyPeriod; // 'day' | 'week'
   final int frequencyCount;
 
-  // Callbacks opcionales para persistencia/negocio
+  // Callbacks opcionales
   void Function(String habitId, int failsInARow)? onMissedPeriod;
   void Function(String habitId)? onCompletedPeriod;
 
   // ---------- Visual ----------
-  static const double petSize = 120; // sin cambios
-  static const double nameHeight = 20; // sin cambios
+  static const double petSize = 120;
+  static const double nameHeight = 20;
   late SpriteAnimationGroupComponent<PetAnim> _visual;
 
-  // Ajustes del spritesheet (sin cambios)
+  // Ajustes del spritesheet
   static const int cols = 16;
   static const int rows = 7;
   static const double idleStep = 0.12;
@@ -42,10 +44,9 @@ class HabitPetComponent extends PositionComponent
   static const double dizzyStep = 0.12;
   static const double celebrateStep = 0.10;
   static const double deadStep = 0.12;
-  static const int blinkStartCol = 12;
   static const int blinkCount = 4;
 
-  // ---------- Física y movimiento (sin cambios) ----------
+  // ---------- Física y movimiento ----------
   bool _isDragging = false;
   double vy = 0;
   static const double gravity = 700;
@@ -60,14 +61,13 @@ class HabitPetComponent extends PositionComponent
   double _restTimeLeft = 0;
   double _blinkCooldown = 3;
 
-  // ---------- Período (modularizado) ----------
+  // ---------- Período ----------
   final PeriodTracker _period;
-
   double? _timer; // celebrate / land / dead
 
   HabitPetComponent.fromHabit(Habit h, this.groundY)
     : habitId = h.id,
-      petType = PetType.fromString(h.petType),
+      petType = PetType.fromString(h.petType), // <- mapea string -> enum
       name = h.name,
       level = h.level,
       frequencyPeriod = h.frequencyPeriod ?? 'day',
@@ -81,7 +81,6 @@ class HabitPetComponent extends PositionComponent
         anchor: Anchor.center,
       );
 
-  // ------ estado por faltas (igual que antes) ------
   void _applyStatusFromFail() {
     switch (_period.failCount) {
       case 0:
@@ -98,7 +97,7 @@ class HabitPetComponent extends PositionComponent
         break;
       case 3:
         _visual.current = PetAnim.dead;
-        _timer = (cols * deadStep); // aprox duración
+        _timer = (cols * deadStep);
         break;
     }
   }
@@ -117,9 +116,10 @@ class HabitPetComponent extends PositionComponent
   // ------ load ------
   @override
   Future<void> onLoad() async {
+    // 🔁 Crea el visual usando la ruta del enum (sin leer nada de la DB)
     _visual = await PetVisual.create(
       images: gameRef.images,
-      petType: petType,
+      petType: petType, // <- enum con imagePath correcto
       petSize: petSize,
       cols: cols,
       rows: rows,
@@ -165,7 +165,7 @@ class HabitPetComponent extends PositionComponent
   void update(double dt) {
     super.update(dt);
 
-    // timers (celebrate / land / dead / idleBlink)
+    // timers
     if (_timer != null) {
       _timer = _timer! - dt;
       if (_timer! <= 0) {
@@ -254,7 +254,7 @@ class HabitPetComponent extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // Nombre centrado arriba (sin cambios)
+    // Nombre centrado arriba
     final tp = TextPainter(
       text: TextSpan(
         text: name,
@@ -278,8 +278,11 @@ class HabitPetComponent extends PositionComponent
   void onTapUp(TapUpEvent event) {
     if (_visual.current == PetAnim.dead) return;
 
+    final ctx = gameRef.buildContext;
+    if (ctx == null) return;
+
     showDialog(
-      context: gameRef.buildContext!,
+      context: ctx,
       builder:
           (_) => AlertDialog(
             title: Text(name),
@@ -287,7 +290,7 @@ class HabitPetComponent extends PositionComponent
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Mascota: ${petType.name}'),
+                Text('Mascota: ${petType.name}'), // <- nombre del enum
                 Text('Nivel: $level'),
                 const SizedBox(height: 8),
                 Text('Faltas: ${_period.failCount}'),
@@ -298,16 +301,16 @@ class HabitPetComponent extends PositionComponent
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(gameRef.buildContext!),
+                onPressed: () => Navigator.pop(ctx),
                 child: const Text('Cerrar'),
               ),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(gameRef.buildContext!);
+                  Navigator.pop(ctx);
                   final editable = Habit(
                     id: habitId,
                     name: name,
-                    petType: petType.name,
+                    petType: petType.name, // <- guardamos el id del enum
                     goal: frequencyCount,
                     progress: 0,
                     life: 100,
@@ -326,7 +329,7 @@ class HabitPetComponent extends PositionComponent
                   );
 
                   Navigator.push(
-                    gameRef.buildContext!,
+                    ctx,
                     MaterialPageRoute(
                       builder: (_) => EditHabitScreen(habit: editable),
                     ),
@@ -336,7 +339,7 @@ class HabitPetComponent extends PositionComponent
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(gameRef.buildContext!);
+                  Navigator.pop(ctx);
                   _completeNow();
                 },
                 child: const Text('Completar ahora'),
