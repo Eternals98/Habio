@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 import 'package:per_habit/features/navigation/presentation/widgets/app_bar_actions.dart';
 import 'package:per_habit/features/user/presentation/controllers/user_provider.dart';
@@ -25,7 +26,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Perfil de usuario'),
-        actions: const [AppBarActions()],
+        actions: [
+          const AppBarActions(), // puedes dejarlo
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            onPressed: () => context.go('/admin'),
+          ),
+        ],
       ),
       body: userState.when(
         data:

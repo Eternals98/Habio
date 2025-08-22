@@ -20,6 +20,7 @@ class HabitModel {
   final DateTime? lastCompletedDate;
   final int frequencyCount;
   final List<String> scheduleTimes;
+  final String frequencyPeriod;
 
   HabitModel({
     required this.id,
@@ -39,19 +40,50 @@ class HabitModel {
     required this.lastCompletedDate,
     required this.frequencyCount,
     required this.scheduleTimes,
+    required this.frequencyPeriod,
   });
 
+  /// ✅ Método para inicializar desde Firestore
+  factory HabitModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+
+    return HabitModel(
+      id: doc.id,
+      name: data['name'] ?? '',
+      petType: data['petType'] ?? 'default',
+      goal: data['goal'] ?? 1,
+      progress: data['progress'] ?? 0,
+      life: data['life'] ?? 100,
+      points: data['points'] ?? 0,
+      level: data['level'] ?? 1,
+      experience: data['experience'] ?? 0,
+      baseStatus: data['baseStatus'] ?? 'normal',
+      tempStatus: data['tempStatus'],
+      streak: data['streak'] ?? 0,
+      lastCompletedDate:
+          data['lastCompletedDate'] != null
+              ? (data['lastCompletedDate'] as Timestamp).toDate()
+              : null,
+      roomId: data['roomId'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      frequencyCount: data['frequencyCount'] ?? 1,
+      scheduleTimes: List<String>.from(data['scheduleTimes'] ?? []),
+      frequencyPeriod: data['frequencyPeriod'] ?? 'day',
+    );
+  }
+
+  /// Método alternativo si ya tienes un map
   factory HabitModel.fromMap(String id, Map<String, dynamic> map) {
     return HabitModel(
       id: id,
-      name: map['name'],
-      petType: map['petType'],
-      goal: map['goal'],
-      progress: map['progress'],
-      life: map['life'],
-      points: map['points'],
-      level: map['level'],
-      experience: map['experience'],
+      name: map['name'] ?? '',
+      petType: map['petType'] ?? 'default',
+      goal: map['goal'] ?? 1,
+      progress: map['progress'] ?? 0,
+      life: map['life'] ?? 100,
+      points: map['points'] ?? 0,
+      level: map['level'] ?? 1,
+      experience: map['experience'] ?? 0,
       baseStatus: map['baseStatus'] ?? 'normal',
       tempStatus: map['tempStatus'],
       streak: map['streak'] ?? 0,
@@ -59,12 +91,14 @@ class HabitModel {
           map['lastCompletedDate'] != null
               ? (map['lastCompletedDate'] as Timestamp).toDate()
               : null,
-      roomId: map['roomId'],
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
+      roomId: map['roomId'] ?? '',
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       frequencyCount: map['frequencyCount'] ?? 1,
       scheduleTimes: List<String>.from(map['scheduleTimes'] ?? []),
+      frequencyPeriod: map['frequencyCount'] ?? 'day',
     );
   }
+
   Map<String, dynamic> toMap() {
     return {
       'name': name,

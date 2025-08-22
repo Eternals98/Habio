@@ -18,6 +18,11 @@ class ShopRepositoryImpl implements ShopRepository {
   ShopRepositoryImpl(this.datasource);
 
   @override
+  Stream<UserProfile> watchUser(String userId) {
+    return datasource.watchUser(userId).map(UserProfileMapper.fromModel);
+  }
+
+  @override
   Stream<List<ShopItem>> watchShopItems() {
     return datasource.watchShopItems().map(
       (models) =>

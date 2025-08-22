@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:per_habit/features/habit/data/models/habit_model.dart';
 
 class RoomModel {
   final String id;
@@ -47,6 +48,7 @@ class RoomModel {
     List<String>? members,
     bool? shared,
     int? order,
+    List<HabitModel>? habits,
   }) {
     return RoomModel(
       id: id,

@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:per_habit/core/config/present/screens/admin_screen.dart';
 import 'package:per_habit/core/routes/go_router_refresh.dart';
 import 'package:per_habit/features/inventary/presentation/screens/inventary_screen.dart';
 import 'package:per_habit/features/navigation/presentation/screens/navigation_shell.dart';
@@ -50,6 +51,11 @@ class AppRouter {
       GoRoute(path: '/', builder: (_, __) => const SplashScreen()),
 
       // Rutas públicas
+      GoRoute(
+        path: '/admin',
+        name: 'admin',
+        builder: (_, __) => const AdminPanelScreen(),
+      ),
       GoRoute(
         path: '/login',
         name: 'login',
@@ -106,11 +112,7 @@ class AppRouter {
                       return const LoginScreen();
                     }
                     // Pasamos el inventario al widget que lo necesita
-                    return NavigationShell(
-                      child: InventaryScreen(
-                        inventario: userProfile.inventario,
-                      ),
-                    );
+                    return NavigationShell(child: InventaryScreen());
                   },
                   loading:
                       () => const Scaffold(

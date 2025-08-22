@@ -2,16 +2,9 @@
 
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/features/habit/application/habit.services.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 import 'package:per_habit/features/habit/domain/reposotories/habit_repository.dart';
-import 'package:per_habit/features/habit/application/create_habit_use_case.dart';
-import 'package:per_habit/features/habit/application/update_habit_use_case.dart';
-import 'package:per_habit/features/habit/application/delete_habit_use_case.dart';
-import 'package:per_habit/features/habit/application/get_habits_by_room_use_case.dart';
-import 'package:per_habit/features/habit/application/add_experience_to_habit_use_case.dart';
-import 'package:per_habit/features/habit/application/level_up_habit_use_case.dart';
-import 'package:per_habit/features/habit/application/clear_temp_status_use_case.dart';
-import 'package:per_habit/features/habit/application/update_pet_status_use_case.dart';
 
 import 'package:per_habit/core/config/providers/config_provider.dart';
 import 'package:per_habit/core/config/helpers/status_helper.dart';
@@ -141,6 +134,7 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
       createdAt: habit.createdAt,
       frequencyCount: habit.frequencyCount,
       scheduleTimes: habit.scheduleTimes,
+      frequencyPeriod: habit.frequencyPeriod,
     );
 
     await _update(updated);

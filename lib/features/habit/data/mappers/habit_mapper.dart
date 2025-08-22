@@ -21,28 +21,49 @@ class HabitMapper {
       createdAt: model.createdAt,
       frequencyCount: model.frequencyCount,
       scheduleTimes: model.scheduleTimes,
+      frequencyPeriod: model.frequencyPeriod,
     );
   }
 
   static HabitModel toModel(Habit entity) {
+    // ------- Defaults a prueba de nulls -------
+    final String baseStatus =
+        (entity.baseStatus.isEmpty) ? 'happy' : entity.baseStatus;
+
+    final String tempStatus = entity.tempStatus ?? '';
+
+    final String frequencyPeriod =
+        (entity.frequencyPeriod == null || entity.frequencyPeriod!.isEmpty)
+            ? 'day'
+            : entity.frequencyPeriod!;
+
+    final List<String> scheduleTimes = entity.scheduleTimes;
+
+    // (Si alguno de estos pudiera venir null en tu Entity, también dales default:)
+    final String id = entity.id; // asume no nulo
+    final String name = entity.name; // asume no nulo
+    final String petType = entity.petType; // asume no nulo
+    final String roomId = entity.roomId; // asume no nulo
+
     return HabitModel(
-      id: entity.id,
-      name: entity.name,
-      petType: entity.petType,
+      id: id,
+      name: name,
+      petType: petType,
       goal: entity.goal,
       progress: entity.progress,
       life: entity.life,
       points: entity.points,
       level: entity.level,
       experience: entity.experience,
-      baseStatus: entity.baseStatus,
-      tempStatus: entity.tempStatus,
+      baseStatus: baseStatus, // ✅ nunca null
+      tempStatus: tempStatus, // ✅ nunca null
       streak: entity.streak,
       lastCompletedDate: entity.lastCompletedDate,
-      roomId: entity.roomId,
+      roomId: roomId,
       createdAt: entity.createdAt,
       frequencyCount: entity.frequencyCount,
-      scheduleTimes: entity.scheduleTimes,
+      scheduleTimes: scheduleTimes, // ✅ nunca null
+      frequencyPeriod: frequencyPeriod, // ✅ nunca null
     );
   }
 }
