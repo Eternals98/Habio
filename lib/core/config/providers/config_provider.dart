@@ -247,3 +247,14 @@ final grantCatalogPrizeProvider = FutureProvider.family<
     }, SetOptions(merge: true));
   });
 });
+
+final saveAllProvider = StateNotifierProvider<_SaveAllNotifier, int>((ref) {
+  return _SaveAllNotifier();
+});
+
+class _SaveAllNotifier extends StateNotifier<int> {
+  _SaveAllNotifier() : super(0);
+
+  /// Llama esto para “disparar” el evento de guardar.
+  void bump() => state = state + 1;
+}

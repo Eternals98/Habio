@@ -3,15 +3,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:per_habit/core/config/present/screens/widgets/pet_types_dialog.dart';
 
+import 'package:per_habit/core/config/present/screens/widgets/pet_types_dialog.dart';
 import 'package:per_habit/core/config/providers/config_provider.dart';
 import 'package:per_habit/core/config/models/pet_type_model.dart';
 import 'package:per_habit/features/store/data/models/catalogo_item_model.dart';
 
-class CatalogTab extends ConsumerWidget {
+class CatalogTab extends ConsumerStatefulWidget {
   const CatalogTab({super.key});
 
+  @override
+  ConsumerState<CatalogTab> createState() => _CatalogTabState();
+}
+
+class _CatalogTabState extends ConsumerState<CatalogTab> {
+  // Categorías (los “ítems normales” excluyen mascota)
   static const List<String> _categorias = [
     'fondo',
     'decoracion',
@@ -19,8 +25,41 @@ class CatalogTab extends ConsumerWidget {
     'accesorio',
   ];
 
+  /// Drafts en memoria (no se guardan hasta pulsar “Guardar”)
+  final Map<String, int> _weightDrafts = {}; // id -> peso
+  final Map<String, bool> _enabledDrafts = {}; // id -> wheelEnabled
+
+  // Últimos datos que pintó el build (para _saveAllEdits)
+  List<CatalogItemModel> _lastAllCatalog = const [];
+  List<CatalogItemModel> _lastCatalog = const [];
+  List<PetTypeModel> _lastPets = const [];
+
+  // ⬇️ guardamos el “unsubscribe” del listenManual
+  late final void Function() _removeSaveAllListener;
+  late final ProviderSubscription<int> _saveAllSub;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+
+    _saveAllSub = ref.listenManual<int>(saveAllProvider, (prev, next) async {
+      if (prev == next) return;
+      await _saveAllEdits();
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Cambios guardados')));
+    });
+  }
+
+  @override
+  void dispose() {
+    _saveAllSub.close(); // <- cerrar la suscripción
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final catalogAsync = ref.watch(catalogItemsStreamProvider);
     final petsAsync = ref.watch(petTypesStreamProvider);
 
@@ -38,6 +77,11 @@ class CatalogTab extends ConsumerWidget {
     final catalog = allCatalog.where((it) => it.category != 'mascota').toList();
     final pets = petsAsync.value ?? const <PetTypeModel>[];
 
+    // Guarda referencia para _saveAllEdits()
+    _lastAllCatalog = allCatalog;
+    _lastCatalog = catalog;
+    _lastPets = pets;
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCatalogDialog(context, ref),
@@ -48,6 +92,8 @@ class CatalogTab extends ConsumerWidget {
         children: [
           Text('Mascotas', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
+
+          // ======= MASCOTAS (control de ruleta/ peso) =======
           ...pets.map((p) {
             final existing = allCatalog.firstWhere(
               (c) => c.id == p.id && c.category == 'mascota',
@@ -63,30 +109,9 @@ class CatalogTab extends ConsumerWidget {
                   ),
             );
 
-            Future<void> _upsertPetCatalogItem({
-              bool? wheelEnabled,
-              int? wheelWeight,
-            }) async {
-              final doc = FirebaseFirestore.instance
-                  .collection('catalogItems')
-                  .doc(p.id);
-
-              final int w = (wheelWeight ?? existing.wheelWeight);
-              final int safeW = w < 1 ? 1 : w;
-
-              await doc.set({
-                'id': p.id,
-                'nombre': p.name,
-                'descripcion': p.description,
-                'icono': p.image,
-                'category': 'mascota',
-                'wheelEnabled': wheelEnabled ?? existing.wheelEnabled,
-                'wheelWeight': safeW,
-              }, SetOptions(merge: true));
-
-              // refresca catálogo
-              ref.invalidate(catalogItemsStreamProvider);
-            }
+            // Valores visibles consideran “drafts” si existen
+            final bool enabled = _enabledDrafts[p.id] ?? existing.wheelEnabled;
+            final int weight = _weightDrafts[p.id] ?? existing.wheelWeight;
 
             return Card(
               child: ListTile(
@@ -96,26 +121,26 @@ class CatalogTab extends ConsumerWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Toggle ruleta
+                    // Toggle ruleta (solo draft)
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text('Ruleta', style: TextStyle(fontSize: 12)),
                         const SizedBox(width: 6),
                         Switch(
-                          value: existing.wheelEnabled,
-                          onChanged: (v) async {
-                            await _upsertPetCatalogItem(wheelEnabled: v);
+                          value: enabled,
+                          onChanged: (v) {
+                            setState(() => _enabledDrafts[p.id] = v);
                           },
                         ),
                       ],
                     ),
                     const SizedBox(width: 8),
-                    // Peso
+                    // Peso (solo draft)
                     SizedBox(
                       width: 64,
                       child: TextFormField(
-                        initialValue: existing.wheelWeight.toString(),
+                        initialValue: '$weight',
                         decoration: const InputDecoration(
                           labelText: 'Peso',
                           isDense: true,
@@ -125,10 +150,11 @@ class CatalogTab extends ConsumerWidget {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        onFieldSubmitted: (v) async {
+                        onChanged: (v) {
                           final n = int.tryParse(v);
-                          final safe = (n == null || n < 1) ? 1 : n;
-                          await _upsertPetCatalogItem(wheelWeight: safe);
+                          setState(() {
+                            _weightDrafts[p.id] = (n == null || n < 1) ? 1 : n;
+                          });
                         },
                       ),
                     ),
@@ -164,7 +190,7 @@ class CatalogTab extends ConsumerWidget {
                         );
                         if (ok == true) {
                           await ref.read(petTypeServiceProvider).delete(p.id);
-                          // (opcional) limpiar su CatalogItem:
+                          // (opcional) borrar su CatalogItem:
                           // await FirebaseFirestore.instance.collection('catalogItems').doc(p.id).delete();
                           ref.invalidate(catalogItemsStreamProvider);
                         }
@@ -183,9 +209,12 @@ class CatalogTab extends ConsumerWidget {
           ),
           const SizedBox(height: 8),
 
-          // Ítems normales
-          ...catalog.map(
-            (it) => Card(
+          // ======= ÍTEMS NORMALES =======
+          ..._lastCatalog.map((it) {
+            final bool enabled = _enabledDrafts[it.id] ?? it.wheelEnabled;
+            final int weight = _weightDrafts[it.id] ?? it.wheelWeight;
+
+            return Card(
               child: ListTile(
                 title: Text(it.nombre),
                 subtitle: Text('${it.descripcion}\nCat: ${it.category}'),
@@ -199,10 +228,9 @@ class CatalogTab extends ConsumerWidget {
                         const Text('Ruleta', style: TextStyle(fontSize: 12)),
                         const SizedBox(width: 6),
                         Switch(
-                          value: it.wheelEnabled,
+                          value: enabled,
                           onChanged: (v) {
-                            final svc = ref.read(catalogItemServiceProvider);
-                            svc.update(it.id, it.copyWith(wheelEnabled: v));
+                            setState(() => _enabledDrafts[it.id] = v);
                           },
                         ),
                       ],
@@ -211,7 +239,7 @@ class CatalogTab extends ConsumerWidget {
                     SizedBox(
                       width: 64,
                       child: TextFormField(
-                        initialValue: it.wheelWeight.toString(),
+                        initialValue: '$weight',
                         decoration: const InputDecoration(
                           labelText: 'Peso',
                           isDense: true,
@@ -221,13 +249,11 @@ class CatalogTab extends ConsumerWidget {
                         inputFormatters: [
                           FilteringTextInputFormatter.digitsOnly,
                         ],
-                        onFieldSubmitted: (v) {
-                          final n = int.tryParse(v) ?? it.wheelWeight;
-                          final svc = ref.read(catalogItemServiceProvider);
-                          svc.update(
-                            it.id,
-                            it.copyWith(wheelWeight: n < 1 ? 1 : n),
-                          );
+                        onChanged: (v) {
+                          final n = int.tryParse(v);
+                          setState(() {
+                            _weightDrafts[it.id] = (n == null || n < 1) ? 1 : n;
+                          });
                         },
                       ),
                     ),
@@ -273,9 +299,10 @@ class CatalogTab extends ConsumerWidget {
                   ],
                 ),
               ),
-            ),
-          ),
-          if (catalog.isEmpty && pets.isEmpty)
+            );
+          }),
+
+          if (_lastCatalog.isEmpty && _lastPets.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Center(child: Text('Sin elementos')),
@@ -283,6 +310,79 @@ class CatalogTab extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// Guarda TODOS los drafts (mascotas + ítems normales) usando un batch.
+  Future<void> _saveAllEdits() async {
+    final batch = FirebaseFirestore.instance.batch();
+
+    Future<void> _upsertPetCatalogItem({
+      required PetTypeModel p,
+      required bool wheelEnabled,
+      required int wheelWeight,
+    }) async {
+      final doc = FirebaseFirestore.instance
+          .collection('catalogItems')
+          .doc(p.id);
+      batch.set(doc, {
+        'id': p.id,
+        'nombre': p.name,
+        'descripcion': p.description,
+        'icono': p.image,
+        'category': 'mascota',
+        'wheelEnabled': wheelEnabled,
+        'wheelWeight': wheelWeight < 1 ? 1 : wheelWeight,
+      }, SetOptions(merge: true));
+    }
+
+    // 1) Mascotas
+    for (final p in _lastPets) {
+      final existing = _lastAllCatalog.firstWhere(
+        (c) => c.id == p.id && c.category == 'mascota',
+        orElse:
+            () => CatalogItemModel(
+              id: p.id,
+              nombre: p.name,
+              descripcion: p.description,
+              icono: p.image,
+              category: 'mascota',
+              wheelEnabled: false,
+              wheelWeight: 1,
+            ),
+      );
+      final enabled = _enabledDrafts[p.id] ?? existing.wheelEnabled;
+      final weight = _weightDrafts[p.id] ?? existing.wheelWeight;
+      await _upsertPetCatalogItem(
+        p: p,
+        wheelEnabled: enabled,
+        wheelWeight: weight,
+      );
+    }
+
+    // 2) Ítems normales (solo si cambió algo)
+    for (final it in _lastCatalog) {
+      final enabled = _enabledDrafts[it.id] ?? it.wheelEnabled;
+      final weight = _weightDrafts[it.id] ?? it.wheelWeight;
+
+      if (enabled != it.wheelEnabled || weight != it.wheelWeight) {
+        final doc = FirebaseFirestore.instance
+            .collection('catalogItems')
+            .doc(it.id);
+        batch.set(doc, {
+          'wheelEnabled': enabled,
+          'wheelWeight': weight < 1 ? 1 : weight,
+        }, SetOptions(merge: true));
+      }
+    }
+
+    await batch.commit();
+
+    // Limpiar drafts y refrescar
+    setState(() {
+      _enabledDrafts.clear();
+      _weightDrafts.clear();
+    });
+    ref.invalidate(catalogItemsStreamProvider);
   }
 
   Future<void> _showCatalogDialog(
@@ -415,11 +515,11 @@ class CatalogTab extends ConsumerWidget {
   }
 }
 
+/// Simple wrapper: reusa tu implementación existente (movida a widgets/pet_types_dialog.dart)
 Future<void> showPetTypeDialog(
   BuildContext context,
   WidgetRef ref, {
   PetTypeModel? pet,
 }) async {
-  // reusa tu implementación existente (la moví a widgets/pet_type_dialog.dart)
   return showPetTypeDialogImpl(context, ref, pet: pet);
 }

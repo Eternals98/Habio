@@ -122,6 +122,7 @@ class HabitController extends AutoDisposeAsyncNotifier<List<Habit>> {
       petType: habit.petType,
       goal: habit.goal,
       progress: habit.progress,
+      personalityId: habit.personalityId,
       life: habit.life,
       points: habit.points,
       level: habit.level,

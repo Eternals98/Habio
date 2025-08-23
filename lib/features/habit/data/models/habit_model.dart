@@ -1,11 +1,14 @@
 // lib/features/habit/data/models/habit_model.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HabitModel {
   final String id;
   final String name;
   final String petType;
+
+  // ✅ Nuevo: personalidad guardada en el hábito
+  final String personalityId;
+
   final int goal;
   final int progress;
   final int life;
@@ -26,6 +29,7 @@ class HabitModel {
     required this.id,
     required this.name,
     required this.petType,
+    required this.personalityId, // <- nuevo obligatorio
     required this.goal,
     required this.progress,
     required this.life,
@@ -43,7 +47,6 @@ class HabitModel {
     required this.frequencyPeriod,
   });
 
-  /// ✅ Método para inicializar desde Firestore
   factory HabitModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
 
@@ -51,6 +54,7 @@ class HabitModel {
       id: doc.id,
       name: data['name'] ?? '',
       petType: data['petType'] ?? 'default',
+      personalityId: data['personalityId'] ?? 'happy', // ✅ fallback
       goal: data['goal'] ?? 1,
       progress: data['progress'] ?? 0,
       life: data['life'] ?? 100,
@@ -66,18 +70,18 @@ class HabitModel {
               : null,
       roomId: data['roomId'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      frequencyCount: data['frequencyCount'] ?? 1,
-      scheduleTimes: List<String>.from(data['scheduleTimes'] ?? []),
-      frequencyPeriod: data['frequencyPeriod'] ?? 'day',
+      frequencyCount: (data['frequencyCount'] as num?)?.toInt() ?? 1,
+      scheduleTimes: List<String>.from(data['scheduleTimes'] ?? const []),
+      frequencyPeriod: data['frequencyPeriod'] ?? 'day', // ✅ fix
     );
   }
 
-  /// Método alternativo si ya tienes un map
   factory HabitModel.fromMap(String id, Map<String, dynamic> map) {
     return HabitModel(
       id: id,
       name: map['name'] ?? '',
       petType: map['petType'] ?? 'default',
+      personalityId: map['personalityId'] ?? 'happy', // ✅
       goal: map['goal'] ?? 1,
       progress: map['progress'] ?? 0,
       life: map['life'] ?? 100,
@@ -93,9 +97,9 @@ class HabitModel {
               : null,
       roomId: map['roomId'] ?? '',
       createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      frequencyCount: map['frequencyCount'] ?? 1,
-      scheduleTimes: List<String>.from(map['scheduleTimes'] ?? []),
-      frequencyPeriod: map['frequencyCount'] ?? 'day',
+      frequencyCount: (map['frequencyCount'] as num?)?.toInt() ?? 1,
+      scheduleTimes: List<String>.from(map['scheduleTimes'] ?? const []),
+      frequencyPeriod: map['frequencyPeriod'] ?? 'day', // ✅ fix (estaba mal)
     );
   }
 
@@ -103,6 +107,7 @@ class HabitModel {
     return {
       'name': name,
       'petType': petType,
+      'personalityId': personalityId, // ✅ nuevo campo persistido
       'goal': goal,
       'progress': progress,
       'life': life,
@@ -120,6 +125,7 @@ class HabitModel {
       'createdAt': Timestamp.fromDate(createdAt),
       'frequencyCount': frequencyCount,
       'scheduleTimes': scheduleTimes,
+      'frequencyPeriod': frequencyPeriod, // ✅ faltaba
     };
   }
 }

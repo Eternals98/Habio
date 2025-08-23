@@ -137,6 +137,8 @@ class _HabitFormState extends ConsumerState<HabitForm> {
       name: _nameController.text.trim(),
       petType: isEdit ? widget.initialHabit!.petType : selectedPet!.id,
       goal: frequencyCount,
+      personalityId:
+          isEdit ? widget.initialHabit!.personalityId : selectedPersonality!.id,
       progress: widget.initialHabit?.progress ?? 0,
       life: widget.initialHabit?.life ?? 100,
       points: widget.initialHabit?.points ?? 0,

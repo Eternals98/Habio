@@ -1,3 +1,4 @@
+// lib/features/habit/data/mappers/habit_mapper.dart
 import 'package:per_habit/features/habit/data/models/habit_model.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 
@@ -7,6 +8,10 @@ class HabitMapper {
       id: model.id,
       name: model.name,
       petType: model.petType,
+
+      /// ✅ mapear personalityId desde el model
+      personalityId: model.personalityId,
+
       goal: model.goal,
       progress: model.progress,
       life: model.life,
@@ -19,51 +24,48 @@ class HabitMapper {
       lastCompletedDate: model.lastCompletedDate,
       roomId: model.roomId,
       createdAt: model.createdAt,
+
       frequencyCount: model.frequencyCount,
       scheduleTimes: model.scheduleTimes,
-      frequencyPeriod: model.frequencyPeriod,
+      frequencyPeriod: model.frequencyPeriod, // 'day' | 'week'
     );
   }
 
   static HabitModel toModel(Habit entity) {
-    // ------- Defaults a prueba de nulls -------
+    // Defaults defensivos
     final String baseStatus =
         (entity.baseStatus.isEmpty) ? 'happy' : entity.baseStatus;
 
-    final String tempStatus = entity.tempStatus ?? '';
+    final String? tempStatus = entity.tempStatus;
 
     final String frequencyPeriod =
-        (entity.frequencyPeriod == null || entity.frequencyPeriod!.isEmpty)
-            ? 'day'
-            : entity.frequencyPeriod!;
+        (entity.frequencyPeriod.isEmpty) ? 'day' : entity.frequencyPeriod;
 
     final List<String> scheduleTimes = entity.scheduleTimes;
 
-    // (Si alguno de estos pudiera venir null en tu Entity, también dales default:)
-    final String id = entity.id; // asume no nulo
-    final String name = entity.name; // asume no nulo
-    final String petType = entity.petType; // asume no nulo
-    final String roomId = entity.roomId; // asume no nulo
-
     return HabitModel(
-      id: id,
-      name: name,
-      petType: petType,
+      id: entity.id,
+      name: entity.name,
+      petType: entity.petType,
+
+      /// ✅ persistir personalityId
+      personalityId: entity.personalityId,
+
       goal: entity.goal,
       progress: entity.progress,
       life: entity.life,
       points: entity.points,
       level: entity.level,
       experience: entity.experience,
-      baseStatus: baseStatus, // ✅ nunca null
-      tempStatus: tempStatus, // ✅ nunca null
+      baseStatus: baseStatus,
+      tempStatus: tempStatus,
       streak: entity.streak,
       lastCompletedDate: entity.lastCompletedDate,
-      roomId: roomId,
+      roomId: entity.roomId,
       createdAt: entity.createdAt,
       frequencyCount: entity.frequencyCount,
-      scheduleTimes: scheduleTimes, // ✅ nunca null
-      frequencyPeriod: frequencyPeriod, // ✅ nunca null
+      scheduleTimes: scheduleTimes,
+      frequencyPeriod: frequencyPeriod,
     );
   }
 }

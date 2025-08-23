@@ -1,7 +1,12 @@
+// lib/features/habit/domain/entities/habit.dart
 class Habit {
   final String id;
   final String name;
   final String petType;
+
+  /// ✅ Nuevo: personalidad del hábito
+  final String personalityId;
+
   final int goal;
   final int progress;
   final int life;
@@ -15,15 +20,16 @@ class Habit {
   final String roomId;
   final DateTime createdAt;
 
-  final int frequencyCount; // ← NUEVO
-  final List<String> scheduleTimes;
-
-  var frequencyPeriod; // ← NUEVO
+  /// Frecuencia flexible
+  final int frequencyCount; // veces por periodo
+  final List<String> scheduleTimes; // HH:mm si 'day', vacío si 'week'
+  final String frequencyPeriod; // 'day' | 'week'
 
   Habit({
     required this.id,
     required this.name,
     required this.petType,
+    required this.personalityId, // ✅ obligatorio
     required this.goal,
     required this.progress,
     required this.life,
@@ -38,6 +44,6 @@ class Habit {
     required this.createdAt,
     required this.frequencyCount,
     required this.scheduleTimes,
-    required String frequencyPeriod,
+    required this.frequencyPeriod, // ✅ era var; ahora String
   });
 }

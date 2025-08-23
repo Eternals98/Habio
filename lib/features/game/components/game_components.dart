@@ -9,20 +9,21 @@ import 'package:per_habit/features/game/components/pet/pet_anim.dart';
 import 'package:per_habit/features/game/components/pet/pet_tracker.dart';
 import 'package:per_habit/features/game/components/pet/pet_visual.dart';
 import 'package:per_habit/features/game/habio_game.dart';
+import 'package:per_habit/features/game/widgets/message_cache.dart';
+import 'package:per_habit/features/game/widgets/speech_bubble_component.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 import 'package:per_habit/features/habit/presentation/screens/edit_habit_screen.dart';
 
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
-  // ---------- Datos del hábito ----------
-  final Habit habit; // <- guardamos el Habit completo
-  String get habitId => habit.id; // helper para no tocar el resto del código
+  // ---------- Datos ----------
+  final Habit habit;
+  String get habitId => habit.id;
   String name;
   int level;
-  final String frequencyPeriod; // 'day' | 'week'
+  final String frequencyPeriod;
   final int frequencyCount;
 
-  // Callbacks opcionales
   void Function(String habitId, int failsInARow)? onMissedPeriod;
   void Function(String habitId)? onCompletedPeriod;
 
@@ -31,7 +32,6 @@ class HabitPetComponent extends PositionComponent
   static const double nameHeight = 20;
   late SpriteAnimationGroupComponent<PetAnim> _visual;
 
-  // Ajustes del spritesheet
   static const int cols = 16;
   static const int rows = 7;
   static const double idleStep = 0.12;
@@ -44,7 +44,6 @@ class HabitPetComponent extends PositionComponent
   static const double deadStep = 0.12;
   static const int blinkCount = 4;
 
-  // ---------- Física y movimiento ----------
   bool _isDragging = false;
   double vy = 0;
   static const double gravity = 700;
@@ -59,18 +58,71 @@ class HabitPetComponent extends PositionComponent
   double _restTimeLeft = 0;
   double _blinkCooldown = 3;
 
-  // ---------- Período ----------
   final PeriodTracker _period;
-  double? _timer; // celebrate / land / dead
+  double? _timer;
+
+  // ---------- Mensajes ----------
+  Map<String, List<String>> _messages = {};
+  bool _saidOnEnter = false;
+  bool _saidOnLoad = false;
+  SpeechBubbleComponent? _activeBubble;
+
+  String get _personalityIdSafe {
+    final pid = (habit.personalityId ?? '').trim().toLowerCase();
+    return pid.isEmpty ? 'carinoso' : pid;
+    // Importante: este id debe coincidir con los docIds que precargaste.
+  }
+
+  String _fallbackMessage(String kind) {
+    switch (kind) {
+      case 'onEnter':
+        return '¡Hola! ¿list@ para avanzar?';
+      case 'onLoad':
+        return 'Listo por aquí ✨';
+      case 'onComplete':
+        return '¡Genial! Objetivo cumplido 🏆';
+      case 'onMissed':
+        return 'No pasa nada, mañana seguimos 💪';
+      default:
+        return '';
+    }
+  }
+
+  void _say(String kind) {
+    final list = _messages[kind] ?? const <String>[];
+    final text =
+        (list.isNotEmpty)
+            ? list[_rand.nextInt(list.length)]
+            : _fallbackMessage(kind);
+    if (text.isEmpty) return;
+
+    _activeBubble?.removeFromParent();
+
+    final bubble =
+        SpeechBubbleComponent(
+            text: text,
+            maxWidth: 220,
+            lifetime: 2.6,
+            fadeSec: 0.18,
+            tailSize: 10,
+            elevation: 4,
+          )
+          ..anchor = Anchor.bottomCenter
+          ..position = Vector2(size.x / 2, -6)
+          ..priority = 1000;
+
+    add(bubble);
+    _activeBubble = bubble;
+  }
 
   HabitPetComponent.fromHabit(Habit h, this.groundY)
     : habit = h,
       name = h.name,
       level = h.level,
-      frequencyPeriod = h.frequencyPeriod ?? 'day',
+      frequencyPeriod = h.frequencyPeriod,
       frequencyCount = h.frequencyCount,
       _period = PeriodTracker(
-        frequencyPeriod: h.frequencyPeriod ?? 'day',
+        frequencyPeriod: h.frequencyPeriod,
         frequencyCount: h.frequencyCount,
       ),
       super(
@@ -108,12 +160,27 @@ class HabitPetComponent extends PositionComponent
     _period.addCompletion();
     _applyStatusFromFail();
     _celebrate();
+    _say('onComplete');
   }
 
-  // ------ load ------
   @override
   Future<void> onLoad() async {
-    // Convención: usa el petType como id para construir el path
+    // *** NO Firestore aquí ***
+    // 1) Cargamos mensajes desde caché (instantáneo)
+    _messages =
+        PersonalityMessagesCache.getSync(_personalityIdSafe) ??
+        const {'onEnter': [], 'onLoad': [], 'onComplete': [], 'onMissed': []};
+    // Si por algún motivo no estaba (no se precargó), caliéntalo en background para futuras apariciones:
+    if (_messages['onEnter']!.isEmpty &&
+        _messages['onLoad']!.isEmpty &&
+        _messages['onComplete']!.isEmpty &&
+        _messages['onMissed']!.isEmpty) {
+      // No bloquea el frame:
+      // ignore: unawaited_futures
+      PersonalityMessagesCache.warmAsync(_personalityIdSafe);
+    }
+
+    // 2) Sprite (si ya hiciste preload de imágenes, esto es muy rápido)
     final petId = habit.petType.trim().toLowerCase();
     final imagePath = 'pets/${petId}_full.png';
 
@@ -133,22 +200,33 @@ class HabitPetComponent extends PositionComponent
       deadStep: deadStep,
     );
     add(_visual);
-
-    // Centrar el sprite dentro del componente y dejar el nombre arriba
     _visual.position = Vector2(size.x / 2, nameHeight + petSize / 2);
 
-    // comportamiento inicial
+    // 3) Comportamiento inicial
     if (_rand.nextBool()) {
       _enterRest();
     } else {
       _enterMove();
     }
 
+    // 4) Mensajes (después de añadir el sprite, para que el globo se vea)
+    if (!_saidOnEnter) {
+      _saidOnEnter = true;
+      _say('onEnter');
+    }
+    // Un pequeño delay opcional para onLoad (evita que se solapen)
+    Future.delayed(const Duration(milliseconds: 350), () {
+      if (!_saidOnLoad) {
+        _saidOnLoad = true;
+        _say('onLoad');
+      }
+    });
+
     _period.initWith(DateTime.now());
     return super.onLoad();
   }
 
-  // ------ movimiento ------
+  // --- resto igual ---
   void _enterRest() {
     _restTimeLeft = 3 + _rand.nextInt(8).toDouble();
     _stepsLeft = 0;
@@ -164,8 +242,6 @@ class HabitPetComponent extends PositionComponent
   @override
   void update(double dt) {
     super.update(dt);
-
-    // timers
     if (_timer != null) {
       _timer = _timer! - dt;
       if (_timer! <= 0) {
@@ -183,7 +259,6 @@ class HabitPetComponent extends PositionComponent
       }
     }
 
-    // gravedad
     if (!_isDragging) {
       vy += gravity * dt;
       position.y += vy * dt;
@@ -193,17 +268,18 @@ class HabitPetComponent extends PositionComponent
       }
     }
 
-    // período (día/semana)
     final change = _period.tick(DateTime.now());
     if (change == PeriodChange.missed) {
       onMissedPeriod?.call(habitId, _period.failCount);
       _applyStatusFromFail();
+      _say('onMissed');
     } else if (change == PeriodChange.completed) {
       onCompletedPeriod?.call(habitId);
       _applyStatusFromFail();
+      _celebrate();
+      _say('onComplete');
     }
 
-    // parpadeo aleatorio
     if (_visual.current == PetAnim.idle && _timer == null && !_isDragging) {
       _blinkCooldown -= dt;
       if (_blinkCooldown <= 0) {
@@ -213,7 +289,6 @@ class HabitPetComponent extends PositionComponent
       }
     }
 
-    // movimiento automático
     if (!_isDragging &&
         _visual.current != PetAnim.carryAir &&
         _visual.current != PetAnim.carryLand &&
@@ -254,7 +329,6 @@ class HabitPetComponent extends PositionComponent
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    // Nombre centrado arriba
     final tp = TextPainter(
       text: TextSpan(
         text: name,
@@ -267,17 +341,14 @@ class HabitPetComponent extends PositionComponent
       textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
     )..layout();
-
     final dx = (size.x - tp.width) / 2;
     const dy = 2.0;
     tp.paint(canvas, Offset(dx, dy));
   }
 
-  // ------ interacción ------
   @override
   void onTapUp(TapUpEvent event) {
     if (_visual.current == PetAnim.dead) return;
-
     final ctx = gameRef.buildContext;
     if (ctx == null) return;
 
@@ -295,7 +366,8 @@ class HabitPetComponent extends PositionComponent
                 const SizedBox(height: 8),
                 Text('Faltas: ${_period.failCount}'),
                 Text(
-                  'Progreso actual: ${_period.doneInPeriod} / $frequencyCount (${frequencyPeriod == 'week' ? 'semana' : 'día'})',
+                  'Progreso actual: ${_period.doneInPeriod} / $frequencyCount '
+                  '(${frequencyPeriod == 'week' ? 'semana' : 'día'})',
                 ),
               ],
             ),
@@ -310,7 +382,8 @@ class HabitPetComponent extends PositionComponent
                   final editable = Habit(
                     id: habitId,
                     name: name,
-                    petType: habit.petType, // guardamos el id como string
+                    petType: habit.petType,
+                    personalityId: habit.personalityId,
                     goal: frequencyCount,
                     progress: 0,
                     life: 100,
@@ -327,7 +400,6 @@ class HabitPetComponent extends PositionComponent
                     frequencyPeriod: frequencyPeriod,
                     scheduleTimes: const [],
                   );
-
                   Navigator.push(
                     ctx,
                     MaterialPageRoute(
