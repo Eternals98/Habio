@@ -12,6 +12,7 @@ import 'package:per_habit/features/store/data/models/catalogo_item_model.dart';
 // - consumeOneSpinProvider(String uid) -> Future<void>
 // - wheelPrizePoolProvider -> Stream<List<CatalogItemModel>>
 // - grantCatalogPrizeProvider(({String uid, String itemId})) -> Future<void>
+// - userWheelMetaProvider(String uid) -> Future<Map<String, dynamic>>
 
 class SpinWheelDialog extends ConsumerStatefulWidget {
   final String uid;
@@ -26,7 +27,7 @@ class SpinWheelDialog extends ConsumerStatefulWidget {
             insetPadding: const EdgeInsets.all(16),
             child: SizedBox(
               width: 380,
-              height: 520,
+              height: 560,
               child: SpinWheelDialog(uid: uid),
             ),
           ),
@@ -49,6 +50,12 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
   // Para el botón de “añadir spin de prueba”
   bool _addingTestSpin = false;
 
+  // (Opcional) estado UI para anuncios recompensados
+  bool _loadingAd = false; // <-- usado en bloque comentado de ads
+
+  // Ángulo del puntero superior (top). En Canvas, "arriba" ≈ -pi/2.
+  static const double _pointerAngle = -pi / 2;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +70,61 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
     _ctrl.dispose();
     super.dispose();
   }
+
+  // ------------------ Helpers ------------------
+
+  // Selección ponderada por peso (para el ganador real)
+  T _pickWeighted<T>(List<T> items, int Function(T) weightOf, Random rnd) {
+    if (items.isEmpty) {
+      throw StateError('No hay items para elegir');
+    }
+    int total = 0;
+    for (final it in items) {
+      final w = weightOf(it);
+      total += (w < 1 ? 1 : w);
+    }
+    int r = rnd.nextInt(total > 0 ? total : 1);
+    for (final it in items) {
+      final w = weightOf(it);
+      final ww = (w < 1 ? 1 : w);
+      if (r < ww) return it;
+      r -= ww;
+    }
+    return items.last; // fallback
+  }
+
+  // Construye segmentos VISUALMENTE iguales (todas las porciones del mismo tamaño).
+  // La probabilidad real se resuelve aparte con _pickWeighted().
+  List<_Slice> _buildSlicesEqual(List<CatalogItemModel> pool) {
+    if (pool.isEmpty) return const [];
+    final n = pool.length;
+    final step = (2 * pi) / n;
+
+    final List<_Slice> out = [];
+    double cursor = 0.0;
+    for (final it in pool) {
+      out.add(
+        _Slice(
+          id: it.id,
+          name: it.nombre,
+          icon: it.icono,
+          weight: (it.wheelWeight as num).toInt(),
+          start: cursor,
+          end: cursor + step,
+        ),
+      );
+      cursor += step;
+    }
+    return out;
+  }
+
+  int _spinsRemainingToSpecial(int totalSpins) {
+    // “Especial” cuando (totalSpins + 1) % 100 == 0  => next spin es especial si totalSpins % 100 == 99
+    final rem = 99 - (totalSpins % 100);
+    return rem; // 0 => el próximo giro es el especial
+  }
+
+  // ------------------ Acciones ------------------
 
   Future<void> _addExtraSpin() async {
     setState(() => _addingTestSpin = true);
@@ -102,32 +164,62 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
     setState(() => _spinning = true);
 
     try {
-      // 1) Consumir spin
+      // --- 0) Leer meta para saber si el SIGUIENTE giro es "raro garantizado" ---
+      final db = FirebaseFirestore.instance;
+      final metaRef = db
+          .collection('users')
+          .doc(widget.uid)
+          .collection('wheel')
+          .doc('meta');
+
+      final metaSnap = await metaRef.get();
+      final meta = metaSnap.data() ?? {};
+      final totalSpins = (meta['totalSpins'] as num?)?.toInt() ?? 0;
+      final isGuaranteedRare = ((totalSpins + 1) % 100 == 0);
+
+      // --- 1) Consumir spin (diario o extra) ---
       await ref.read(consumeOneSpinProvider(widget.uid).future);
       ref.invalidate(availableSpinsFromMetaProvider(widget.uid));
       ref.invalidate(userWheelMetaProvider(widget.uid)); // opcional
 
-      // 2) Elegir segmento ponderado (pesos enteros)
-      final int totalW = slices.fold<int>(0, (a, s) => a + s.weight);
-      final rnd = Random().nextInt(totalW > 0 ? totalW : 1);
-      int acc = 0;
-      late _Slice selected;
-      for (final s in slices) {
-        acc += s.weight;
-        if (rnd < acc) {
-          selected = s;
-          break;
-        }
+      // --- 2) Pool lógico para PROBABILIDAD real ---
+      final pool =
+          (ref.read(wheelPrizePoolProvider).value ?? <CatalogItemModel>[]);
+      List<CatalogItemModel> logicalPool;
+      if (isGuaranteedRare) {
+        final rare =
+            pool.where((it) => (it.wheelWeight as num).toInt() < 50).toList();
+        logicalPool = rare.isNotEmpty ? rare : pool; // fallback si no hay raros
+      } else {
+        logicalPool = pool;
+      }
+      if (logicalPool.isEmpty) {
+        throw StateError('No hay premios disponibles.');
       }
 
-      // Ángulo objetivo (centro del segmento)
+      // --- 3) Elegir ganador ponderado ---
+      final rnd = Random();
+      final winner = _pickWeighted<CatalogItemModel>(
+        logicalPool,
+        (it) => (it.wheelWeight as num).toInt(),
+        rnd,
+      );
+
+      // localizar el slice VISUAL del ganador
+      final visualIndex = slices.indexWhere((s) => s.id == winner.id);
+      final _Slice selected =
+          visualIndex >= 0 ? slices[visualIndex] : slices.first;
+
+      // --- 4) Animación: ir al centro del slice ganador bajo el puntero superior ---
+      // Nota: 0 rad está a las 3 en punto; el puntero está ARRIBA (-pi/2).
+      // Para que el centro del segmento (targetAngle) quede bajo el puntero:
+      // rotación objetivo = vueltas + (puntero - targetAngle).
       final targetAngle = (selected.start + selected.end) / 2;
-
-      // Vueltas completas + destino
       final spins = 4 + Random().nextInt(3); // 4 a 6 vueltas
-      final target = (spins * 2 * pi) + targetAngle;
+      final targetRotation =
+          (spins * 2 * pi) + (_pointerAngle - targetAngle); // ✅ clave
 
-      final tween = Tween<double>(begin: _currentAngle, end: target);
+      final tween = Tween<double>(begin: _currentAngle, end: targetRotation);
       _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
       _ctrl
         ..reset()
@@ -139,15 +231,20 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
 
       await _ctrl.forward();
 
-      // 3) Otorgar premio
+      // --- 5) Otorgar premio ---
       await ref.read(
-        grantCatalogPrizeProvider((
-          uid: widget.uid,
-          itemId: selected.id,
-        )).future,
+        grantCatalogPrizeProvider((uid: widget.uid, itemId: winner.id)).future,
       );
 
-      setState(() => _lastPrizeName = selected.name);
+      // --- 6) Incrementar contador totalSpins ---
+      await db.runTransaction((tx) async {
+        final snap = await tx.get(metaRef);
+        final curr = (snap.data()?['totalSpins'] as num?)?.toInt() ?? 0;
+        tx.set(metaRef, {'totalSpins': curr + 1}, SetOptions(merge: true));
+      });
+      ref.invalidate(userWheelMetaProvider(widget.uid)); // refrescar meta
+
+      setState(() => _lastPrizeName = winner.nombre);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
@@ -163,13 +260,22 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
   Widget build(BuildContext context) {
     final spinsAsync = ref.watch(availableSpinsFromMetaProvider(widget.uid));
     final poolAsync = ref.watch(wheelPrizePoolProvider);
+    final metaAsync = ref.watch(userWheelMetaProvider(widget.uid));
 
     final int spins = spinsAsync.valueOrNull ?? 0;
-    // Fuerza tipado fuerte del pool
     final List<CatalogItemModel> pool =
         poolAsync.valueOrNull ?? <CatalogItemModel>[];
 
-    final slices = _buildSlices(pool);
+    // Slices visuales iguales
+    final slices = _buildSlicesEqual(pool);
+
+    // Meta (totales y contador hacia el especial)
+    final int totalSpins = metaAsync.maybeWhen(
+      data: (m) => (m['totalSpins'] as num?)?.toInt() ?? 0,
+      orElse: () => 0,
+    );
+    final bool nextIsGuaranteedRare = ((totalSpins + 1) % 100 == 0);
+    final int remaining = _spinsRemainingToSpecial(totalSpins);
 
     return Stack(
       children: [
@@ -182,6 +288,40 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
                 children: [
                   Text('Ruleta', style: Theme.of(context).textTheme.titleLarge),
                   const Spacer(),
+
+                  // Badge "Raro garantizado" + progreso
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          nextIsGuaranteedRare
+                              ? Colors.amber.shade300
+                              : Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          nextIsGuaranteedRare
+                              ? Icons.star
+                              : Icons.star_border_rounded,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          nextIsGuaranteedRare
+                              ? '¡Próximo giro ESPECIAL!'
+                              : 'Faltan $remaining',
+                          style: Theme.of(context).textTheme.labelMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
                   TextButton.icon(
                     onPressed: _addingTestSpin ? null : _addExtraSpin,
                     icon:
@@ -194,8 +334,36 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
                             : const Icon(Icons.add),
                     label: const Text('Spin test'),
                   ),
+
+                  // -------------------- ANUNCIOS RECOMPENSADOS (comentado) --------------------
+                  // const SizedBox(width: 8),
+                  // TextButton.icon(
+                  //   onPressed: _loadingAd ? null : _showRewardedAdAndGrant,
+                  //   icon: _loadingAd
+                  //       ? const SizedBox(
+                  //           height: 16,
+                  //           width: 16,
+                  //           child: CircularProgressIndicator(strokeWidth: 2),
+                  //         )
+                  //       : const Icon(Icons.ondemand_video),
+                  //   label: const Text('+1 spin por anuncio'),
+                  // ),
+                  // ---------------------------------------------------------------------------
                 ],
               ),
+
+              // Línea con totales
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 6.0, bottom: 2),
+                  child: Text(
+                    'Spins totales: $totalSpins · Próximo especial en $remaining',
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
+                ),
+              ),
+
               if (_lastPrizeName != null) ...[
                 Align(
                   alignment: Alignment.centerLeft,
@@ -213,8 +381,10 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Rueda
+                        // Rueda (visual igualitaria)
                         Transform.rotate(
+                          // Nota: ya corregimos el objetivo en _spin con _pointerAngle,
+                          // aquí solo aplicamos la rotación acumulada.
                           angle: _currentAngle % (2 * pi),
                           child: CustomPaint(
                             painter: _WheelPainter(slices: slices),
@@ -317,54 +487,66 @@ class _SpinWheelDialogState extends ConsumerState<SpinWheelDialog>
         Positioned(
           right: 8,
           top: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: spinsAsync.when(
-              data: (n) => Text('Spins: $n'),
-              loading: () => const Text('Spins: …'),
-              error: (_, __) => const Text('Spins: ?'),
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: spinsAsync.when(
+                  data: (n) => Text('Spins: $n'),
+                  loading: () => const Text('Spins: …'),
+                  error: (_, __) => const Text('Spins: ?'),
+                ),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  // Construye segmentos según pesos (tipado fuerte)
-  List<_Slice> _buildSlices(List<CatalogItemModel> pool) {
-    if (pool.isEmpty) return const [];
-    final int total = pool.fold<int>(
-      0,
-      (a, it) => a + ((it.wheelWeight) as num).toInt(),
-    );
-    if (total <= 0) return const [];
-
-    double cursor = 0.0;
-    final List<_Slice> out = [];
-    for (final it in pool) {
-      int w = ((it.wheelWeight) as num).toInt();
-      if (w < 1) w = 1;
-
-      final frac = w / total;
-      final size = 2 * pi * frac;
-      out.add(
-        _Slice(
-          id: it.id,
-          name: it.nombre,
-          icon: it.icono,
-          weight: w,
-          start: cursor,
-          end: cursor + size,
-        ),
-      );
-      cursor += size;
-    }
-    return out;
-  }
+  // -------------------- BLOQUE DE ANUNCIOS RECOMPENSADOS (comentado) --------------------
+  // Para activarlo:
+  // 1) Añade google_mobile_ads al pubspec.
+  // 2) Inicializa MobileAds.instance.initialize() en main().
+  // 3) Sustituye RewardedAd.testAdUnitId por tu ID real en release.
+  //
+  // Future<void> _showRewardedAdAndGrant() async {
+  //   setState(() => _loadingAd = true);
+  //   try {
+  //     RewardedAd.load(
+  //       adUnitId: RewardedAd.testAdUnitId,
+  //       request: const AdRequest(),
+  //       rewardedAdLoadCallback: RewardedAdLoadCallback(
+  //         onAdLoaded: (ad) async {
+  //           setState(() => _loadingAd = false);
+  //           await ad.show(onUserEarnedReward: (ad, reward) async {
+  //             await _addExtraSpin(); // +1 spin al terminar el anuncio
+  //           });
+  //           ad.dispose();
+  //         },
+  //         onAdFailedToLoad: (error) {
+  //           setState(() => _loadingAd = false);
+  //           ScaffoldMessenger.of(context).showSnackBar(
+  //             SnackBar(content: Text('No se pudo cargar el anuncio: $error')),
+  //           );
+  //         },
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     setState(() => _loadingAd = false);
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error anuncio: $e')),
+  //     );
+  //   }
+  // }
+  // ----------------------------------------------------------------------
 }
 
 class _Slice {
