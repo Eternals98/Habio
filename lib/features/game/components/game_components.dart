@@ -68,7 +68,7 @@ class HabitPetComponent extends PositionComponent
   SpeechBubbleComponent? _activeBubble;
 
   String get _personalityIdSafe {
-    final pid = (habit.personalityId ?? '').trim().toLowerCase();
+    final pid = (habit.personalityId).trim().toLowerCase();
     return pid.isEmpty ? 'carinoso' : pid;
     // Importante: este id debe coincidir con los docIds que precargaste.
   }
