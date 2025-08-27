@@ -1,9 +1,9 @@
-// lib/features/admin/presentation/screens/admin_panel_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:per_habit/core/config/present/screens/tabs/catalogo_tab.dart';
+import 'package:per_habit/core/config/present/screens/tabs/notification_tab.dart';
 import 'package:per_habit/core/config/present/screens/tabs/pets_tab.dart';
 import 'package:per_habit/core/config/present/screens/tabs/shop_tab.dart';
 
@@ -21,22 +21,18 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3, // Mascotas + Catálogo + Tienda
+      length: 4, // Mascotas + Catálogo + Tienda + Notificaciones
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Admin'),
           actions: [
-            // ⬇️ NUEVO: botón Guardar
+            // ⬇️ Botón Guardar (para otras pestañas)
             IconButton(
               tooltip: 'Guardar cambios',
               icon: const Icon(Icons.save),
               onPressed: () {
-                // Dispara el “tick” global para que las pestañas escuchen y guarden
                 ref.read(saveAllProvider.notifier).bump();
-
-                // Opcional: quitar foco para cerrar teclados/inputs
                 FocusScope.of(context).unfocus();
-
                 ScaffoldMessenger.of(
                   context,
                 ).showSnackBar(const SnackBar(content: Text('Guardando…')));
@@ -49,14 +45,23 @@ class _AdminPanelScreenState extends ConsumerState<AdminPanelScreen>
             ),
           ],
           bottom: const TabBar(
+            isScrollable: true,
             tabs: [
               Tab(text: 'Mascotas'),
               Tab(text: 'Catálogo'),
               Tab(text: 'Tienda'),
+              Tab(text: 'Notificaciones'), // ⬅️ NUEVO
             ],
           ),
         ),
-        body: const TabBarView(children: [PetsTab(), CatalogTab(), ShopTab()]),
+        body: const TabBarView(
+          children: [
+            PetsTab(),
+            CatalogTab(),
+            ShopTab(),
+            NotificationsTab(), // ⬅️ NUEVO
+          ],
+        ),
       ),
     );
   }

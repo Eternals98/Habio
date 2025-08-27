@@ -14,6 +14,9 @@ import 'package:per_habit/features/game/widgets/speech_bubble_component.dart';
 import 'package:per_habit/features/habit/domain/entities/habit.dart';
 import 'package:per_habit/features/habit/presentation/screens/edit_habit_screen.dart';
 
+// 🚨 NUEVO: notificaciones
+import 'package:per_habit/features/notification/data/notification_services.dart';
+
 class HabitPetComponent extends PositionComponent
     with TapCallbacks, DragCallbacks, HasGameRef<HabioGame> {
   // ---------- Datos ----------
@@ -70,7 +73,6 @@ class HabitPetComponent extends PositionComponent
   String get _personalityIdSafe {
     final pid = (habit.personalityId).trim().toLowerCase();
     return pid.isEmpty ? 'carinoso' : pid;
-    // Importante: este id debe coincidir con los docIds que precargaste.
   }
 
   String _fallbackMessage(String kind) {
@@ -161,26 +163,46 @@ class HabitPetComponent extends PositionComponent
     _applyStatusFromFail();
     _celebrate();
     _say('onComplete');
+
+    // 🔔 Reprogramar notificaciones tras completar manualmente
+    _reprogramNotifications();
+  }
+
+  Future<void> _reprogramNotifications() async {
+    // Si hay horarios configurados, reprograma “siguiente del día” + “última llamada”
+    final times = habit.scheduleTimes;
+    if (times.isNotEmpty) {
+      await LocalNotifications.reprogramHabitForToday(
+        habitId: habitId,
+        habitName: name,
+        times: times, // Deben ser 'HH:mm'
+        lastCallAt: const TimeOfDay(hour: 21, minute: 30),
+        payload: '/room?id=${gameRef.roomId}&habit=$habitId',
+      );
+    } else {
+      // Si no hay horarios, cancela cualquier noti de este hábito
+      await LocalNotifications.cancelHabitNotifications(habitId);
+    }
   }
 
   @override
   Future<void> onLoad() async {
     // *** NO Firestore aquí ***
-    // 1) Cargamos mensajes desde caché (instantáneo)
+
+    // 1) Cargamos mensajes desde caché
     _messages =
         PersonalityMessagesCache.getSync(_personalityIdSafe) ??
         const {'onEnter': [], 'onLoad': [], 'onComplete': [], 'onMissed': []};
-    // Si por algún motivo no estaba (no se precargó), caliéntalo en background para futuras apariciones:
     if (_messages['onEnter']!.isEmpty &&
         _messages['onLoad']!.isEmpty &&
         _messages['onComplete']!.isEmpty &&
         _messages['onMissed']!.isEmpty) {
-      // No bloquea el frame:
+      // Calienta en background
       // ignore: unawaited_futures
       PersonalityMessagesCache.warmAsync(_personalityIdSafe);
     }
 
-    // 2) Sprite (si ya hiciste preload de imágenes, esto es muy rápido)
+    // 2) Sprite
     final petId = habit.petType.trim().toLowerCase();
     final imagePath = 'pets/${petId}_full.png';
 
@@ -209,12 +231,11 @@ class HabitPetComponent extends PositionComponent
       _enterMove();
     }
 
-    // 4) Mensajes (después de añadir el sprite, para que el globo se vea)
+    // 4) Mensajes
     if (!_saidOnEnter) {
       _saidOnEnter = true;
       _say('onEnter');
     }
-    // Un pequeño delay opcional para onLoad (evita que se solapen)
     Future.delayed(const Duration(milliseconds: 350), () {
       if (!_saidOnLoad) {
         _saidOnLoad = true;
@@ -226,7 +247,7 @@ class HabitPetComponent extends PositionComponent
     return super.onLoad();
   }
 
-  // --- resto igual ---
+  // --- movimiento y estados visuales ---
   void _enterRest() {
     _restTimeLeft = 3 + _rand.nextInt(8).toDouble();
     _stepsLeft = 0;
@@ -273,11 +294,38 @@ class HabitPetComponent extends PositionComponent
       onMissedPeriod?.call(habitId, _period.failCount);
       _applyStatusFromFail();
       _say('onMissed');
+
+      // 🔔 Notificaciones al perder el periodo
+      if (_visual.current == PetAnim.dead) {
+        // Si murió, cancela
+        // ignore: unawaited_futures
+        LocalNotifications.cancelOnHabitDeath(habitId);
+      } else {
+        // Reprograma siguiente recordatorio del día + última llamada
+        // ignore: unawaited_futures
+        LocalNotifications.reprogramHabitForToday(
+          habitId: habitId,
+          habitName: name,
+          times: habit.scheduleTimes, // 'HH:mm'
+          lastCallAt: const TimeOfDay(hour: 21, minute: 30),
+          payload: '/room?id=${gameRef.roomId}&habit=$habitId',
+        );
+      }
     } else if (change == PeriodChange.completed) {
       onCompletedPeriod?.call(habitId);
       _applyStatusFromFail();
       _celebrate();
       _say('onComplete');
+
+      // 🔔 Reprograma tras completar
+      // ignore: unawaited_futures
+      LocalNotifications.reprogramHabitForToday(
+        habitId: habitId,
+        habitName: name,
+        times: habit.scheduleTimes, // 'HH:mm'
+        lastCallAt: const TimeOfDay(hour: 21, minute: 30),
+        payload: '/room?id=${gameRef.roomId}&habit=$habitId',
+      );
     }
 
     if (_visual.current == PetAnim.idle && _timer == null && !_isDragging) {
@@ -398,7 +446,7 @@ class HabitPetComponent extends PositionComponent
                     createdAt: DateTime.now(),
                     frequencyCount: frequencyCount,
                     frequencyPeriod: frequencyPeriod,
-                    scheduleTimes: const [],
+                    scheduleTimes: habit.scheduleTimes, // conserva horarios
                   );
                   Navigator.push(
                     ctx,
@@ -412,7 +460,7 @@ class HabitPetComponent extends PositionComponent
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  _completeNow();
+                  _completeNow(); // completa ahora + reprograma notis
                 },
                 child: const Text('Completar ahora'),
               ),
