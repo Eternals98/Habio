@@ -1,3 +1,4 @@
+import 'package:per_habit/features/inventary/data/mappers/inventary_mapper.dart';
 import 'package:per_habit/features/inventary/data/models/inventory_model.dart';
 import 'package:per_habit/features/user/domain/entities/user_profile.dart';
 
@@ -27,6 +28,11 @@ class UserProfileModel extends UserProfile {
   }
 
   Map<String, dynamic> toMap() {
+    final inventarioModel =
+        inventario is InventarioModel
+            ? inventario as InventarioModel
+            : InventarioMapper.toModel(inventario);
+
     return {
       'email': email,
       'displayName': displayName,
@@ -34,7 +40,7 @@ class UserProfileModel extends UserProfile {
       'photoUrl': photoUrl,
       'onboardingCompleted': onboardingCompleted,
       'habipoints': habipoints,
-      'inventario': (inventario as InventarioModel).toMap(),
+      'inventario': inventarioModel.toMap(),
     };
   }
 }
