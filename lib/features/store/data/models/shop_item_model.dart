@@ -26,7 +26,7 @@ class ShopItemModel {
     required this.content,
   });
 
-  factory ShopItemModel.fromMap(Map<String, dynamic> map) {
+  factory ShopItemModel.fromMap(Map<String, dynamic> map, {String? id}) {
     final contentList =
         (map['content'] as List<dynamic>?)?.map<ItemModel>((itemMap) {
           switch (itemMap['category']) {
@@ -46,8 +46,12 @@ class ShopItemModel {
         }).toList() ??
         [];
 
+    final rawMapId = map['id'];
+    final mapId = rawMapId is String ? rawMapId : rawMapId?.toString();
+    final resolvedId = (mapId != null && mapId.isNotEmpty) ? mapId : id ?? '';
+
     return ShopItemModel(
-      id: map['id'] ?? '',
+      id: resolvedId,
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       icono: map['icono'] ?? '',
