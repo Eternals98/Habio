@@ -8,6 +8,8 @@ import 'package:per_habit/features/inventary/data/models/decoracion_model.dart';
 import 'package:per_habit/features/inventary/data/models/fondo_model.dart';
 
 abstract class InventarioDatasource {
+  Future<void> saveInventory(InventarioModel inventario);
+  Future<void> replaceInventory(InventarioModel inventario);
   Future<void> createItem(
     ItemModel item,
     String userId,
@@ -24,6 +26,20 @@ class InventarioDatasourceImpl implements InventarioDatasource {
   final FirebaseFirestore firestore;
 
   InventarioDatasourceImpl(this.firestore);
+
+  @override
+  Future<void> saveInventory(InventarioModel inventario) async {
+    final userDoc = firestore.collection('users').doc(inventario.userId);
+    await userDoc.set({
+      'inventario': inventario.toMap(),
+    }, SetOptions(merge: true));
+  }
+
+  @override
+  Future<void> replaceInventory(InventarioModel inventario) async {
+    final userDoc = firestore.collection('users').doc(inventario.userId);
+    await userDoc.update({'inventario': inventario.toMap()});
+  }
 
   @override
   Future<void> createItem(ItemModel item, String userId) async {
