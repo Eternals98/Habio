@@ -136,11 +136,6 @@ flutter:
     - assets/images/logo.png
     - assets/images/
     - assets/images/room_icons/room_base.svg
-    - assets/videos/
-    - assets/audios/
-    - assets/rive_animations/
-    - assets/pdfs/
-    - assets/jsons/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

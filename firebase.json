@@ -1,1 +1,24 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"habio-35e46","appId":"1:557450296752:android:956783250bbfc0674e6a75","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"habio-35e46","configurations":{"android":"1:557450296752:android:956783250bbfc0674e6a75","ios":"1:557450296752:ios:e317ca104fe8806f4e6a75","web":"1:557450296752:web:59a3b06cbbed0d5a4e6a75","windows":"1:557450296752:web:9c17ecd8b71b1ab14e6a75"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "habio-35e46",
+          "appId": "1:557450296752:android:956783250bbfc0674e6a75",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "habio-35e46",
+          "configurations": {
+            "android": "1:557450296752:android:956783250bbfc0674e6a75",
+            "ios": "1:557450296752:ios:e317ca104fe8806f4e6a75",
+            "web": "1:557450296752:web:59a3b06cbbed0d5a4e6a75",
+            "windows": "1:557450296752:web:9c17ecd8b71b1ab14e6a75"
+          }
+        }
+      }
+    }
+  }
+}
