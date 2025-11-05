@@ -43,14 +43,9 @@ class UserProfileForm extends ConsumerWidget {
           width: double.infinity,
           child: ElevatedButton(
             onPressed: () {
-              final updated = UserProfile(
-                id: profile.id,
-                email: profile.email,
+              final updated = profile.copyWith(
                 displayName: nameController.text.trim(),
-                bio: profile.bio,
                 photoUrl: avatarController.text.trim(),
-                onboardingCompleted: profile.onboardingCompleted,
-                habipoints: profile.habipoints,
               );
 
               ref.read(userControllerProvider.notifier).updateProfile(updated);
