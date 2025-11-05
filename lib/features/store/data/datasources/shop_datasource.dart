@@ -34,7 +34,7 @@ class ShopDatasourceImpl implements ShopDatasource {
         .map(
           (snapshot) =>
               snapshot.docs
-                  .map((doc) => ShopItemModel.fromMap(doc.data()))
+                  .map((doc) => ShopItemModel.fromMap(doc.data(), id: doc.id))
                   .toList(),
         );
   }

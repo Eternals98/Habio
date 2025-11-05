@@ -10,7 +10,9 @@ class ShopAdminService {
 
   Stream<List<ShopItemModel>> watchAll() {
     return db.collection(collectionPath).snapshots().map((snap) {
-      return snap.docs.map((d) => ShopItemModel.fromMap(d.data())).toList();
+      return snap.docs
+          .map((d) => ShopItemModel.fromMap(d.data(), id: d.id))
+          .toList();
     });
   }
 
