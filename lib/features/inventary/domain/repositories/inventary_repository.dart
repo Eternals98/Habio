@@ -2,8 +2,8 @@ import 'package:per_habit/features/inventary/domain/entities/inventory.dart';
 import 'package:per_habit/features/inventary/domain/entities/items.dart';
 
 abstract class InventarioRepository {
-  Future<void> createInventory(Inventario inventario, String userId);
-  Future<void> updateInventory(Inventario inventario);
+  Future<void> saveInventory(Inventario inventario);
+  Future<void> replaceInventory(Inventario inventario);
   Future<void> deleteInventory(String itemId, String userId);
 
   // Métodos nuevos para manipular items individuales
