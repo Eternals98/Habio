@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
@@ -149,7 +149,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               labelText: 'Correo electrónico',
               prefixIcon: const Icon(Icons.email_outlined),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.secondaryBackground,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 18,
@@ -180,7 +180,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
               labelText: 'Contraseña',
               prefixIcon: const Icon(Icons.lock_outline),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: AppColors.secondaryBackground,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 18,
@@ -254,14 +254,29 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           const SizedBox(height: 16),
 
           // Social buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              FaIcon(FontAwesomeIcons.google, color: Colors.redAccent),
-              SizedBox(width: 16),
-              FaIcon(FontAwesomeIcons.facebook, color: Colors.blueAccent),
-              SizedBox(width: 16),
-              FaIcon(FontAwesomeIcons.apple, color: Colors.black),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 16,
+            runSpacing: 12,
+            children: [
+              _SocialButton(
+                iconData: FontAwesomeIcons.google,
+                label: 'Google',
+                color: Colors.redAccent,
+                semanticLabel: 'Iniciar sesión con Google',
+              ),
+              _SocialButton(
+                iconData: FontAwesomeIcons.facebook,
+                label: 'Facebook',
+                color: Colors.blueAccent,
+                semanticLabel: 'Iniciar sesión con Facebook',
+              ),
+              _SocialButton(
+                iconData: FontAwesomeIcons.apple,
+                label: 'Apple',
+                color: Colors.black,
+                semanticLabel: 'Iniciar sesión con Apple',
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -283,6 +298,43 @@ class _LoginFormState extends ConsumerState<LoginForm> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({
+    required this.iconData,
+    required this.label,
+    required this.color,
+    required this.semanticLabel,
+  });
+
+  final IconData iconData;
+  final String label;
+  final Color color;
+  final String semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: OutlinedButton.icon(
+        onPressed: () {
+          // TODO: Implement social auth
+        },
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primaryText,
+          side: const BorderSide(color: AppColors.alternate),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        icon: Icon(iconData, color: color, size: 18),
+        label: Text(label),
       ),
     );
   }
