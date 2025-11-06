@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/core/firebase/firebase_providers.dart';
 import 'package:per_habit/features/room/application/room_services.dart';
 import 'package:per_habit/features/room/data/datasources/room_firestore_datasource.dart';
 import 'package:per_habit/features/room/data/room_repository_impl.dart';
@@ -7,12 +8,14 @@ import 'package:per_habit/features/room/domain/repositories/room_repository.dart
 import 'room_controller.dart';
 
 final roomDatasourceProvider = Provider<RoomFirestoreDatasource>((ref) {
-  return RoomFirestoreDatasource();
+  final firestore = ref.watch(firebaseFirestoreProvider);
+  return RoomFirestoreDatasource(firestore: firestore);
 });
 
 final roomRepositoryProvider = Provider<RoomRepository>((ref) {
   final ds = ref.read(roomDatasourceProvider);
-  return RoomRepositoryImpl(ds);
+  final firestore = ref.watch(firebaseFirestoreProvider);
+  return RoomRepositoryImpl(ds, firestore: firestore);
 });
 
 final getUserRoomsUseCaseProvider = Provider<GetUserRoomsUseCase>((ref) {

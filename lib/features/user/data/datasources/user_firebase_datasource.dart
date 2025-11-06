@@ -2,7 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:per_habit/features/user/data/models/user_profile_model.dart';
 
 class UserFirestoreDatasource {
-  final _usersRef = FirebaseFirestore.instance.collection('users');
+  UserFirestoreDatasource({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _usersRef =>
+      _firestore.collection('users');
 
   Future<void> createUser(UserProfileModel user) async {
     await _usersRef.doc(user.id).set(user.toMap());

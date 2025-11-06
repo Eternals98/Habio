@@ -3,8 +3,15 @@ import 'package:per_habit/features/room/data/models/room_model.dart';
 import 'package:rxdart/rxdart.dart';
 
 class RoomFirestoreDatasource {
-  final _roomsRef = FirebaseFirestore.instance.collection('rooms');
-  final _usersRef = FirebaseFirestore.instance.collection('users');
+  RoomFirestoreDatasource({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> get _roomsRef =>
+      _firestore.collection('rooms');
+  CollectionReference<Map<String, dynamic>> get _usersRef =>
+      _firestore.collection('users');
 
   Future<List<RoomModel>> getUserRooms(String userId) async {
     final created = await _roomsRef.where('ownerId', isEqualTo: userId).get();
