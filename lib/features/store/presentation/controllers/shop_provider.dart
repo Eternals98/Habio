@@ -1,6 +1,6 @@
 // lib/features/store/presentation/controllers/shop_provider.dart
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:per_habit/core/firebase/firebase_providers.dart';
 
 // Datasource (con ShopDatasourceImpl)
 import 'package:per_habit/features/store/data/datasources/shop_datasource.dart';
@@ -26,7 +26,8 @@ class PurchaseHabiPointsParams {
 }
 
 final shopDatasourceProvider = Provider<ShopDatasource>((ref) {
-  return ShopDatasourceImpl(FirebaseFirestore.instance);
+  final firestore = ref.watch(firebaseFirestoreProvider);
+  return ShopDatasourceImpl(firestore);
 });
 
 final shopRepositoryProvider = Provider<ShopRepository>((ref) {

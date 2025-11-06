@@ -1,7 +1,7 @@
 // lib/features/habit/presentation/controllers/habit_provider.dart
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:per_habit/core/firebase/firebase_providers.dart';
 import 'package:per_habit/features/habit/application/habit.services.dart';
 
 import 'habit_controller.dart';
@@ -12,7 +12,8 @@ import 'package:per_habit/features/habit/data/datasources/habit_datasource.dart'
 
 /// 🔹 Datasource Provider
 final habitDatasourceProvider = Provider<HabitDatasource>((ref) {
-  return HabitDatasourceImpl(FirebaseFirestore.instance);
+  final firestore = ref.watch(firebaseFirestoreProvider);
+  return HabitDatasourceImpl(firestore);
 });
 
 /// 🔹 Repository Provider

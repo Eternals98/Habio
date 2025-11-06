@@ -8,8 +8,10 @@ import 'datasources/room_firestore_datasource.dart';
 
 class RoomRepositoryImpl implements RoomRepository {
   final RoomFirestoreDatasource datasource;
+  final FirebaseFirestore _firestore;
 
-  RoomRepositoryImpl(this.datasource);
+  RoomRepositoryImpl(this.datasource, {FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<Room>> getUserRooms(String userId) async {
@@ -24,7 +26,7 @@ class RoomRepositoryImpl implements RoomRepository {
 
   @override
   Future<Room> createRoom(String name, String ownerId) async {
-    final newDocId = FirebaseFirestore.instance.collection('rooms').doc().id;
+    final newDocId = _firestore.collection('rooms').doc().id;
 
     // 🔢 Obtener rooms existentes para calcular el siguiente "order"
     final userRooms = await datasource.getUserRooms(ownerId);
