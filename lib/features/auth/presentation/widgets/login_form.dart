@@ -6,61 +6,87 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 
-class LoginForm extends ConsumerWidget {
+class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends ConsumerState<LoginForm> {
+  late final TextEditingController _emailController;
+  late final TextEditingController _passwordController;
+  late final FocusNode _emailFocus;
+  late final FocusNode _passwordFocus;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
+    _emailFocus = FocusNode();
+    _passwordFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    await ref.read(authControllerProvider.notifier).login(email, password);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
-    final authController = ref.read(authControllerProvider.notifier);
 
-    final emailController = TextEditingController();
-    final passwordController = TextEditingController();
-    final emailFocus = FocusNode();
-    final passwordFocus = FocusNode();
-    final formKey = GlobalKey<FormState>();
-
-    Future<void> handleAuth() async {
-      if (!formKey.currentState!.validate()) return;
-      final email = emailController.text.trim();
-      final password = passwordController.text.trim();
-
-      await authController.login(email, password);
-      final user = ref.read(authControllerProvider).user;
-      final error = ref.read(authControllerProvider).error;
+    ref.listen(authControllerProvider, (previous, next) {
+      final user = next.user;
+      final error = next.error;
 
       if (user != null) {
+        if (!mounted) return;
         context.goNamed('home');
       } else if (error != null &&
           error.toLowerCase().contains('invalid-credential')) {
+        if (!mounted) return;
         showDialog(
           context: context,
-          builder:
-              (_) => AlertDialog(
-                title: const Text('Ups 😥'),
-                content: const Text(
-                  'Usuario no encontrado.\nVerifica tu correo o regístrate.',
-                ),
-                actions: [
-                  TextButton(
-                    child: const Text('Registrarme'),
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.go('/register');
-                    },
-                  ),
-                  TextButton(
-                    child: const Text('Volver'),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+          builder: (_) => AlertDialog(
+            title: const Text('Ups 😥'),
+            content: const Text(
+              'Usuario no encontrado.\nVerifica tu correo o regístrate.',
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Registrarme'),
+                onPressed: () {
+                  Navigator.pop(context);
+                  context.go('/register');
+                },
               ),
+              TextButton(
+                child: const Text('Volver'),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          ),
         );
       }
-    }
+    });
 
     return Form(
-      key: formKey,
+      key: _formKey,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -93,11 +119,11 @@ class LoginForm extends ConsumerWidget {
 
           // Email
           TextFormField(
-            controller: emailController,
-            focusNode: emailFocus,
+            controller: _emailController,
+            focusNode: _emailFocus,
             textInputAction: TextInputAction.next,
             onFieldSubmitted:
-                (_) => FocusScope.of(context).requestFocus(passwordFocus),
+                (_) => FocusScope.of(context).requestFocus(_passwordFocus),
             validator: (value) {
               if (value == null || value.isEmpty) return 'Ingresa tu correo';
               if (!value.contains('@') || !value.contains('.')) {
@@ -124,10 +150,10 @@ class LoginForm extends ConsumerWidget {
 
           // Password
           TextFormField(
-            controller: passwordController,
-            focusNode: passwordFocus,
+            controller: _passwordController,
+            focusNode: _passwordFocus,
             textInputAction: TextInputAction.done,
-            onFieldSubmitted: (_) => handleAuth(),
+            onFieldSubmitted: (_) => _handleAuth(),
             obscureText: true,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -172,7 +198,7 @@ class LoginForm extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: authState.loading ? null : handleAuth,
+              onPressed: authState.loading ? null : _handleAuth,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
