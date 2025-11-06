@@ -90,23 +90,26 @@ class ResetPasswordScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: authState.loading
-                        ? null
-                        : () async {
-                            if (!formKey.currentState!.validate()) return;
-                            final email = emailController.text.trim();
-                            await controller.resetPassword(email);
+                    onPressed:
+                        authState.loading
+                            ? null
+                            : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              final email = emailController.text.trim();
+                              await controller.resetPassword(email);
 
-                            if (ref.read(authControllerProvider).error == null) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                      'Enlace de recuperación enviado al correo.'),
-                                ),
-                              );
-                              context.pop(); // Vuelve al login
-                            }
-                          },
+                              if (ref.read(authControllerProvider).error ==
+                                  null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Enlace de recuperación enviado al correo.',
+                                    ),
+                                  ),
+                                );
+                                context.pop(); // Vuelve al login
+                              }
+                            },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -114,30 +117,32 @@ class ResetPasswordScreen extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: authState.loading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                    child:
+                        authState.loading
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                            : const Text(
+                              'Enviar enlace',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
                             ),
-                          )
-                        : const Text(
-                            'Enviar enlace',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
                   ),
                 ),
 
                 if (authState.error != null) ...[
                   const SizedBox(height: 12),
                   Text(
-                    authState.error!,
+                    authState.error!.message,
                     style: const TextStyle(color: Colors.red),
                   ),
                 ],
