@@ -119,49 +119,27 @@ class _HeroSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 32),
-        AspectRatio(
-          aspectRatio: isCompact ? 3 / 2 : 4 / 3,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
-              gradient: const LinearGradient(
-                colors: [AppColors.primary, AppColors.tertiary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.2),
-                  blurRadius: 24,
-                  offset: const Offset(0, 16),
-                ),
-              ],
+        Align(
+          alignment:
+              isCompact ? Alignment.center : Alignment.centerLeft,
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: isCompact ? 320 : 420,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Align(
-                alignment: Alignment.bottomLeft,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Mantén tu progreso a la vista',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Visualiza tus logros y celebra cada paso importante.',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(
+                color: AppColors.primary.withValues(alpha: 0.18),
+                width: 1.2,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Semantics(
+              label: 'Ilustración de hábitos saludables',
+              child: Image.asset(
+                'assets/images/pets/penguin_full.png',
+                fit: BoxFit.contain,
               ),
             ),
           ),

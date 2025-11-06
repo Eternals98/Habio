@@ -105,7 +105,7 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'Habbito',
+            'Habio',
             style: GoogleFonts.poppins(
               fontSize: 32,
               fontWeight: FontWeight.w700,
