@@ -27,6 +27,28 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     _passwordController = TextEditingController();
     _emailFocus = FocusNode();
     _passwordFocus = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleAuth() async {
+    if (!_formKey.currentState!.validate()) return;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    await ref.read(authControllerProvider.notifier).login(email, password);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
 
     ref.listen(authControllerProvider, (previous, next) {
       final user = next.user;
@@ -62,28 +84,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
         );
       }
     });
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    _emailFocus.dispose();
-    _passwordFocus.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleAuth() async {
-    if (!_formKey.currentState!.validate()) return;
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-
-    await ref.read(authControllerProvider.notifier).login(email, password);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = ref.watch(authControllerProvider);
 
     return Form(
       key: _formKey,
