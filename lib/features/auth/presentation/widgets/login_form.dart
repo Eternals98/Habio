@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:per_habit/core/theme/app_colors.dart';
+import 'package:per_habit/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:per_habit/features/auth/presentation/controllers/auth_providers.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
@@ -52,36 +53,49 @@ class _LoginFormState extends ConsumerState<LoginForm> {
 
     ref.listen(authControllerProvider, (previous, next) {
       final user = next.user;
-      final error = next.error;
-
-      if (user != null) {
+      if (user != null && previous?.user != user) {
         if (!mounted) return;
         context.goNamed('home');
-      } else if (error != null &&
-          error.toLowerCase().contains('invalid-credential')) {
+        return;
+      }
+
+      final error = next.error;
+      if (error != null && previous?.error != error) {
         if (!mounted) return;
-        showDialog(
-          context: context,
-          builder: (_) => AlertDialog(
-            title: const Text('Ups 😥'),
-            content: const Text(
-              'Usuario no encontrado.\nVerifica tu correo o regístrate.',
-            ),
-            actions: [
-              TextButton(
-                child: const Text('Registrarme'),
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.go('/register');
-                },
-              ),
-              TextButton(
-                child: const Text('Volver'),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-          ),
-        );
+        switch (error.code) {
+          case AuthErrorCode.invalidCredential:
+          case AuthErrorCode.userNotFound:
+            showDialog(
+              context: context,
+              builder:
+                  (_) => AlertDialog(
+                    title: const Text('Ups 😥'),
+                    content: Text(
+                      error.code == AuthErrorCode.userNotFound
+                          ? 'Usuario no encontrado.\nVerifica tu correo o regístrate.'
+                          : 'Credenciales incorrectas.\nVerifica tus datos o restablece tu contraseña.',
+                    ),
+                    actions: [
+                      TextButton(
+                        child: const Text('Registrarme'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.go('/register');
+                        },
+                      ),
+                      TextButton(
+                        child: const Text('Volver'),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+            );
+            break;
+          default:
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(content: Text(error.message)));
+        }
       }
     });
 
