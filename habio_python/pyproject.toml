@@ -1,0 +1,28 @@
+[build-system]
+requires = ["flet"]
+build-backend = "flet"
+
+[project]
+name = "Habio"
+version = "1.0.0"
+description = "Gamified habit tracker app"
+authors = [{name = "Your Name"}]
+dependencies = [
+    "flet",
+    "peewee"
+]
+
+[tool.flet]
+project_name = "Habio"
+org_name = "com.yourcompany.habio"
+product_name = "Habio"
+main_module = "src.main"
+
+[tool.flet.android]
+package = "com.yourcompany.habio"
+permissions = [
+    "android.permission.INTERNET"
+]
+
+[tool.flet.ios]
+bundle_id = "com.yourcompany.habio"
