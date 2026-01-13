@@ -9,11 +9,27 @@ def DashboardScreen(page: ft.Page):
 
     def load_data():
         user = AuthController.get_current_user()
-        if user:
-            user_stats.value = f"Level: {user.level} | XP: {user.xp} | Coins: {user.coins}"
-        else:
+        if not user:
             page.go("/login")
             return
+
+        # Try to refresh user from API
+        try:
+            from src.features.auth.auth_repository import me as api_me
+            user_data = api_me()
+            user_stats.value = f"Level: {user_data.get('level', user.level)} | XP: {user_data.get('xp', user.xp)} | Coins: {user_data.get('coins', user.coins)}"
+        except Exception:
+            user_stats.value = f"Level: {user.level} | XP: {user.xp} | Coins: {user.coins}"
+
+        # Try load rooms from API, fallback to local DB
+        try:
+            from src.features.room.room_repository import list_rooms
+            rooms = list_rooms()
+            rooms_column.controls = [build_room_card(room) for room in rooms]
+            page.update()
+            return
+        except Exception:
+            pass
 
         rooms = Room.select().where(Room.user == user)
         rooms_column.controls = [build_room_card(room) for room in rooms]
@@ -34,17 +50,22 @@ def DashboardScreen(page: ft.Page):
         )
 
     def build_habit_card(habit):
+        # habit may be a dict (from API) or a model instance
+        is_done = habit.get('is_completed_today') if isinstance(habit, dict) else habit.is_completed_today
+        name = habit.get('name') if isinstance(habit, dict) else habit.name
+        streak = habit.get('streak') if isinstance(habit, dict) else habit.streak
+        habit_id = habit.get('id') if isinstance(habit, dict) else habit.id
         return ft.Container(
             content=ft.Row(
                 controls=[
-                    ft.Icon("check_circle" if habit.is_completed_today else "radio_button_unchecked", 
-                            color=ft.Colors.GREEN if habit.is_completed_today else ft.Colors.WHITE),
-                    ft.Text(habit.name, size=16, expand=True),
-                    ft.Text(f"Streak: {habit.streak}"),
+                    ft.Icon("check_circle" if is_done else "radio_button_unchecked", 
+                            color=ft.Colors.GREEN if is_done else ft.Colors.WHITE),
+                    ft.Text(name, size=16, expand=True),
+                    ft.Text(f"Streak: {streak}"),
                     ft.IconButton(
                         icon="check",
-                        on_click=lambda _, h=habit: mark_completed(h),
-                        disabled=habit.is_completed_today
+                        on_click=lambda _, hid=habit_id: mark_completed(hid),
+                        disabled=is_done
                     )
                 ],
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN
@@ -54,12 +75,11 @@ def DashboardScreen(page: ft.Page):
             border_radius=5
         )
 
-    def mark_completed(habit):
-        success, msg = HabitController.complete_habit(habit.id)
-        if success:
-            page.snack_bar = ft.SnackBar(ft.Text(msg))
-            page.snack_bar.open = True
-            load_data()
+    def mark_completed(habit_id):
+        success, msg = HabitController.complete_habit(habit_id)
+        page.snack_bar = ft.SnackBar(ft.Text(msg))
+        page.snack_bar.open = True
+        load_data()
         
     def add_habit_to_room(room):
         add_habit_dialog(page, room)

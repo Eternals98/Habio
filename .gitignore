@@ -74,6 +74,7 @@ web/.dart_tool/
 
 # Otros
 pubspec.lock
-
+.env
+.env.*
 
 

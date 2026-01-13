@@ -1,13 +1,20 @@
 from peewee import SqliteDatabase, Model
+from playhouse.db_url import connect
 import os
 
-# Ensure the database file is stored in a proper location
-DB_PATH = "habio.db"
-db = SqliteDatabase(DB_PATH)
+# Choose DB: if DATABASE_URL is set, connect to that (Postgres), otherwise fallback to local sqlite
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL:
+    db = connect(DATABASE_URL)
+else:
+    # Ensure the database file is stored in a proper location
+    DB_PATH = os.getenv("HABIO_DB_PATH", "habio.db")
+    db = SqliteDatabase(DB_PATH)
 
 class BaseModel(Model):
     class Meta:
         database = db
+
 
 def initialize_database():
     from src.models.user import User, Friend
@@ -15,7 +22,7 @@ def initialize_database():
     from src.models.inventory import ShopItem, InventoryItem, Gift
     from src.models.room import Room
     
-    db.connect()
+    db.connect(reuse_if_open=True)
     db.create_tables([User, Friend, Habit, ShopItem, InventoryItem, Gift, Room])
 
     # Seed some shop items if empty

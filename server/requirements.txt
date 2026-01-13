@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+peewee
+python-dotenv
+passlib[bcrypt]
+python-jose
+pydantic-settings
+psycopg[binary]
+psycopg2-binary
+peewee-migrate
+
+# Test requirements
+pytest
+pytest-asyncio
+httpx
