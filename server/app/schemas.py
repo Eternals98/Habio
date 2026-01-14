@@ -12,6 +12,9 @@ class UserOut(BaseModel):
     id: int
     username: str
     email: str
+    pet_name: str | None = None
+    pet_type: str | None = None
+    pet_personality: str | None = None
 
 
 class Token(BaseModel):

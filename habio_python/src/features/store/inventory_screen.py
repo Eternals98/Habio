@@ -2,6 +2,7 @@ import flet as ft
 from src.models.inventory import InventoryItem, ShopItem
 from src.features.auth.auth_controller import AuthController
 from src.features.store.store_repository import list_inventory
+from src.core.theme import card_container, primary_button, section_title, show_snack
 import os
 
 
@@ -41,20 +42,18 @@ def InventoryScreen(page: ft.Page):
         page.update()
 
     def build_item_card_dict(it):
-        return ft.Container(
-            content=ft.Row(
+        return card_container(
+            ft.Row(
                 controls=[
                     _maybe_image_control(it.get('icon_path')),
                     ft.Column([
                         ft.Text(it.get('name'), weight="bold"),
-                        ft.Text(f"Quantity: {it.get('quantity')}"),
+                        ft.Text(f"Quantity: {it.get('quantity')}", size=12),
                         ft.Text(it.get('description', ''), size=12),
                     ], expand=True),
+                    primary_button('Use', on_click=lambda e: show_snack(page, f"Used {it.get('name')}") , small=True)
                 ]
-            ),
-            padding=10,
-            bgcolor=ft.Colors.SURFACE_VARIANT,
-            border_radius=10
+            )
         )
 
     def build_item_card(inv_item):
@@ -78,7 +77,7 @@ def InventoryScreen(page: ft.Page):
     load_inventory()
     return ft.Container(
         content=ft.Column([
-            ft.Text("My Inventory", size=24, weight="bold"),
+            section_title("My Inventory"),
             ft.Container(height=10),
             items_column
         ]),

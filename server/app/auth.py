@@ -47,9 +47,11 @@ def authenticate_user(username: str, password: str):
 
 def register_user(username: str, email: str, password: str):
     try:
+        import random
+        personalities = ['alegre', 'tierno', 'triste', 'enojon', 'timido', 'energetico']
         init_db()  # ensure tables exist
         hashed = get_password_hash(password)
-        user = User.create(username=username, email=email, password_hash=hashed)
+        user = User.create(username=username, email=email, password_hash=hashed, pet_personality=random.choice(personalities))
         # default "My Room"
         Room.create(user=user, name="My Room")
         return user

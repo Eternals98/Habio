@@ -11,11 +11,11 @@ def main(page: ft.Page):
     # Initialize Database
     initialize_database()
 
-    # Page Configuration
+    # Page Configuration — cozy & modern
     page.title = "Habio"
-    page.bgcolor = ft.Colors.WHITE
     page.padding = 0
-    page.bgcolor = ft.Colors.WHITE
+    from src.core.theme import BG
+    page.bgcolor = BG
 
     # Basic Routing
     from src.features.dashboard.dashboard import DashboardScreen
@@ -51,6 +51,17 @@ def main(page: ft.Page):
             from src.features.room.room_screen import RoomScreen
             room = RoomScreen(page)
             page.add(room)
+        elif page.route == "/wheel":
+            from src.features.wheel.wheel_screen import WheelScreen
+            wheel = WheelScreen(page)
+            page.add(wheel)
+        elif page.route == "/pet":
+            from src.features.pet.pet_screen import PetScreen
+            pet = PetScreen(page)
+            page.add(pet)
+            from src.features.room.room_screen import RoomScreen
+            room = RoomScreen(page)
+            page.add(room)
 
         page.update()
 
@@ -61,4 +72,4 @@ def main(page: ft.Page):
     route_change(None)
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.run(main)

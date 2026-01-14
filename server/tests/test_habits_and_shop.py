@@ -9,6 +9,9 @@ client = TestClient(app)
 
 def setup_module(module):
     os.environ["DATABASE_URL"] = "sqlite:///./test_habio.db"
+    from app.db import db
+    from app import models
+    db.drop_tables([models.User, models.Friend, models.Room, models.Habit, models.ShopItem, models.InventoryItem, models.Gift, models.WheelPrize, models.Migration], safe=True)
     init_db()
 
 

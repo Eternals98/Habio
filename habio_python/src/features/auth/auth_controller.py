@@ -2,6 +2,7 @@ from src.models.user import User
 from src.models.room import Room
 from src.core.session import set_token, get_token, clear_token
 from src.features.auth.auth_repository import login as api_login, register as api_register, me as api_me
+from src.services.http_client import APIError
 
 class AuthController:
     current_user_id = None
@@ -23,6 +24,8 @@ class AuthController:
             })
             cls.current_user_id = user.id
             return True, "Login successful"
+        except APIError as e:
+            return False, e.message
         except Exception as e:
             return False, str(e)
 
@@ -45,6 +48,8 @@ class AuthController:
                 Room.create(user=user, name="My Room")
             cls.current_user_id = user.id
             return True, "Registration successful"
+        except APIError as e:
+            return False, e.message
         except Exception as e:
             return False, str(e)
 

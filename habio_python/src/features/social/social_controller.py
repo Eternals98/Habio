@@ -2,6 +2,7 @@ from src.models.user import User, Friend
 from src.features.auth.auth_controller import AuthController
 from src.features.habits.habit_controller import HabitController # Not needed directly but good context
 from src.models.inventory import InventoryItem, Gift, ShopItem
+from src.features.social.social_repository import send_gift as api_send_gift, list_received as api_list_received, claim_gift as api_claim_gift
 
 class SocialController:
     @staticmethod
@@ -49,6 +50,13 @@ class SocialController:
         current_user = AuthController.get_current_user()
         if not current_user: return False, "Not logged in"
 
+        # Try server first
+        try:
+            resp = api_send_gift(friend_id, inventory_item_id)
+            return True, resp.get('message', 'Sent')
+        except Exception:
+            pass
+
         try:
             # Check if user owns item
             inv_item = InventoryItem.get_by_id(inventory_item_id)
@@ -83,13 +91,54 @@ class SocialController:
         if not current_user:
             return []
 
-        gifts = (Gift
-                 .select(Gift, ShopItem, User)
-                 .join(ShopItem)
-                 .switch(Gift)
-                 .join(User, on=(Gift.sender == User.id))
-                 .where(Gift.receiver == current_user, Gift.is_claimed == False))
-        return list(gifts)
+        try:
+            resp = api_list_received()
+            # Return as simple dicts
+            return resp
+        except Exception:
+            gifts = (Gift
+                     .select(Gift, ShopItem, User)
+                     .join(ShopItem)
+                     .switch(Gift)
+                     .join(User, on=(Gift.sender == User.id))
+                     .where(Gift.receiver == current_user, Gift.is_claimed == False))
+            return list(gifts)
+
+    @staticmethod
+    def claim_gift(gift_id):
+        current_user = AuthController.get_current_user()
+        if not current_user: return False, "Not logged in"
+
+        try:
+            resp = api_claim_gift(gift_id)
+            if resp.get('ok'):
+                return True, resp.get('message')
+            return False, str(resp)
+        except Exception:
+            try:
+                gift = Gift.get_by_id(gift_id)
+                if gift.receiver != current_user:
+                    return False, "Not your gift"
+
+                if gift.is_claimed:
+                    return False, "Already claimed"
+
+                # Add to inventory
+                inv_item, created = InventoryItem.get_or_create(
+                    user=current_user,
+                    item=gift.item,
+                    defaults={'quantity': 0}
+                )
+                inv_item.quantity += 1
+                inv_item.save()
+
+                # Mark as claimed
+                gift.is_claimed = True
+                gift.save()
+
+                return True, f"Claimed {gift.item.name}!"
+            except Exception as e:
+                return False, str(e)
 
     @staticmethod
     def claim_gift(gift_id):

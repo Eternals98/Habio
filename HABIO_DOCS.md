@@ -88,6 +88,10 @@ API — endpoints principales
 - POST /shop/buy {item_id} -> buy item
 - GET /shop/inventory -> list user inventory
 
+- GET /pet/personalities -> list available pet personalities
+- POST /pet/personality {personality} -> set current user's pet personality
+- POST /pet/chat {message} -> chat with pet (stub/AI-ready), personality affects responses
+
 Cliente (Flet) — comportamiento
 
 - Ubicación principal: `habio_python/src/`
@@ -123,6 +127,16 @@ Assets
 
 - Las imágenes usadas por Flutter están en `assets/images/` en la raíz del repo (original app). Se pueden copiar a `habio_python/assets/images/` si quieres empaquetarlas con la app Python.
 - La UI actual muestra emojis para ítems por defecto; Store/Inventory intentan cargar imágenes si `icon_path` termina en `.png/.jpg/.svg`.
+
+Assets - sincronizar al cliente (desarrollo)
+
+- Para que la app Flet encuentre las imágenes (pets, room_icons) copia los assets desde la carpeta raíz `assets/images` a `habio_python/assets/images` ejecutando:
+
+  ```bash
+  python habio_python/tools/sync_assets.py
+  ```
+
+- Esto es útil en desarrollo; para empaquetado final copia manualmente `habio_python/assets` al build o inclúyelo en el instalador.
 
 Cómo probar el flujo completo (recomendado)
 

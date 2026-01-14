@@ -2,10 +2,12 @@ import flet as ft
 from src.features.habits.habit_controller import HabitController
 from src.features.auth.auth_controller import AuthController
 from src.models.room import Room
+from src.core.theme import section_title, section_subtitle, card_container, primary_button
+
 
 def DashboardScreen(page: ft.Page):
     rooms_column = ft.Column(spacing=10, scroll=ft.ScrollMode.AUTO)
-    user_stats = ft.Text("Loading...", color=ft.Colors.WHITE)
+    user_stats = ft.Text("Loading...", color=ft.Colors.BLACK)
 
     def load_data():
         user = AuthController.get_current_user()
@@ -37,16 +39,13 @@ def DashboardScreen(page: ft.Page):
 
     def build_room_card(room):
         habits_in_room = [build_habit_card(h) for h in room.habits]
-        return ft.Container(
-            content=ft.Column([
+        return card_container(
+            ft.Column([
                 ft.Text(room.name, size=20, weight="bold"),
-                ft.ElevatedButton("Add Habit to this Room", on_click=lambda e: add_habit_to_room(room)),
+                primary_button("Add Habit", on_click=lambda e: add_habit_to_room(room), small=True),
                 ft.Container(height=10),
                 *habits_in_room
-            ]),
-            padding=15,
-            bgcolor=ft.Colors.SURFACE_VARIANT,
-            border_radius=10
+            ])
         )
 
     def build_habit_card(habit):
@@ -85,20 +84,45 @@ def DashboardScreen(page: ft.Page):
         add_habit_dialog(page, room)
 
     load_data()
+
+    def pet_image_control(user):
+        pet_map = {
+            'ducky': 'ducky_full.png',
+            'penguin': 'penguin_full.png',
+            'teddy': 'teddy_full.png',
+        }
+        fname = pet_map.get(getattr(user, 'pet_type', ''), None)
+        if fname:
+            try:
+                img = ft.Image(src=f"assets/images/pets/{fname}", width=64, height=64)
+                return ft.Container(content=img, width=72, height=72, border_radius=36, padding=4, bgcolor=ft.Colors.SURFACE_VARIANT)
+            except Exception:
+                return ft.Text(getattr(user, 'pet_name', 'Pet'))
+        return ft.Text(getattr(user, 'pet_name', 'Pet'))
+
+    header = card_container(
+        ft.Row([
+            ft.Row([pet_image_control(AuthController.get_current_user()), ft.Column([ft.Text("Habio", size=22, weight='bold', color=ft.Colors.BLUE_900), ft.Text("Your habit world", size=11, color=ft.Colors.GREY_700)])]),
+            ft.Column([user_stats], horizontal_alignment=ft.CrossAxisAlignment.END)
+        ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
+        padding=16
+    )
+
+    from src.core.theme import press_effect
+
+    actions_row = ft.Row([
+        primary_button("Store", on_click=lambda e: (press_effect(e.control, page), page.go("/store"))),
+        primary_button("Inventory", on_click=lambda e: (press_effect(e.control, page), page.go("/inventory"))),
+        primary_button("Rooms", on_click=lambda e: (press_effect(e.control, page), page.go("/room"))),
+        primary_button("Wheel", on_click=lambda e: (press_effect(e.control, page), page.go("/wheel"))),
+    ], alignment=ft.MainAxisAlignment.SPACE_EVENLY)
+
     return ft.Container(
         content=ft.Column(
             controls=[
-                ft.Container(
-                    content=ft.Row(
-                        [
-                            ft.Text("Dashboard", size=24, weight="bold"),
-                            user_stats
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN
-                    ),
-                    padding=10,
-                    bgcolor=ft.Colors.PRIMARY_CONTAINER
-                ),
+                header,
+                ft.Container(height=10),
+                actions_row,
                 ft.Container(height=20),
                 ft.Text("My Rooms", size=20),
                 ft.Container(

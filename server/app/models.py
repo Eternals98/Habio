@@ -14,6 +14,7 @@ class User(BaseModel):
     pet_name = CharField(default="Pet")
     pet_hp = IntegerField(default=100)
     pet_type = CharField(default="blob")
+    pet_personality = CharField(default="alegre")
 
 
 class Friend(BaseModel):
@@ -66,6 +67,15 @@ class Gift(BaseModel):
     item = ForeignKeyField(ShopItem)
     message = CharField(null=True)
     is_claimed = BooleanField(default=False)
+
+
+class WheelPrize(BaseModel):
+    name = CharField()
+    prize_type = CharField(default="coins")  # 'coins' or 'item'
+    value = IntegerField(default=0)  # coins amount or item id if prize_type=='item'
+    item = ForeignKeyField(ShopItem, null=True, backref='wheel_prizes')
+    icon_path = CharField(null=True)
+    weight = IntegerField(default=1)
 
 
 class Migration(BaseModel):

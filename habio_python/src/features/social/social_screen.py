@@ -1,39 +1,40 @@
 import flet as ft
 from src.features.social.social_controller import SocialController
-
-import flet as ft
-from src.features.social.social_controller import SocialController
+from src.core.theme import card_container, section_title
 
 def SocialScreen(page: ft.Page):
     friends_column = ft.Column(spacing=10)
     gifts_column = ft.Column(spacing=10)
 
     def load_friends():
-        friends = SocialController.get_friends()
-        friends_column.controls = [build_friend_card(f) for f in friends]
+        try:
+            friends = SocialController.get_friends()
+            friends_column.controls = [build_friend_card(f) for f in friends]
+        except Exception:
+            friends_column.controls = [ft.Text('Unable to load friends')]
         page.update()
 
     def load_gifts():
-        gifts = SocialController.get_received_gifts()
-        gifts_column.controls = [build_gift_card(g) for g in gifts]
+        try:
+            gifts = SocialController.get_received_gifts()
+            gifts_column.controls = [build_gift_card(g) for g in gifts]
+        except Exception:
+            gifts_column.controls = [ft.Text('Unable to load gifts')]
         page.update()
 
     def build_friend_card(user):
-        return ft.Container(
-            content=ft.Row(
+        return card_container(
+            ft.Row(
                 controls=[
                     ft.Icon(ft.icons.PERSON, color=ft.Colors.CYAN),
                     ft.Column([
                         ft.Text(user.username, weight="bold"),
-                        ft.Text(f"Lvl: {user.level} | Pet: {user.pet_name}", size=12, color="grey")
+                        ft.Text(f"Lvl: {user.level} | Pet: {user.pet_name}", size=12, color=ft.Colors.GREY)
                     ]),
                     ft.IconButton(ft.icons.CARD_GIFTCARD, tooltip="Send Gift", 
                                   on_click=lambda _: open_gift_dialog(user))
                 ],
-            ),
-            padding=10,
-            bgcolor=ft.Colors.SURFACE_VARIANT,
-            border_radius=10
+            )
         )
 
     def open_gift_dialog(user):

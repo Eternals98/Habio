@@ -3,6 +3,7 @@ from src.models.inventory import ShopItem, InventoryItem
 from src.features.auth.auth_controller import AuthController
 from src.features.store.store_repository import list_items, buy_item
 from src.features.auth.auth_repository import me as api_me
+from src.core.theme import section_title, section_subtitle, card_container, primary_button, show_snack
 import os
 
 ASSETS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '..', '..', 'assets', 'images')
@@ -40,8 +41,7 @@ def StoreScreen(page: ft.Page):
         def buy(e):
             try:
                 resp = buy_item(item['id'])
-                page.snack_bar = ft.SnackBar(ft.Text(resp.get('message', 'Bought!')))
-                page.snack_bar.open = True
+                show_snack(page, resp.get('message', 'Bought!'))
                 # Update UI coins
                 try:
                     user_data = api_me()
@@ -50,12 +50,10 @@ def StoreScreen(page: ft.Page):
                     pass
                 load_shop_items()
             except Exception as ex:
-                page.snack_bar = ft.SnackBar(ft.Text(str(ex)))
-                page.snack_bar.open = True
-                page.update()
+                show_snack(page, str(ex))
 
-        return ft.Container(
-            content=ft.Row(
+        return card_container(
+            ft.Row(
                 controls=[
                     _maybe_image_control(item.get('icon_path')),
                     ft.Column([
@@ -63,12 +61,9 @@ def StoreScreen(page: ft.Page):
                         ft.Text(item.get('description', ''), size=12),
                         ft.Text(f"{item.get('price')} coins")
                     ], expand=True),
-                    ft.ElevatedButton("Buy", on_click=buy)
+                    primary_button("Buy", on_click=buy)
                 ]
-            ),
-            padding=10,
-            bgcolor=ft.Colors.SURFACE_VARIANT,
-            border_radius=10
+            )
         )
 
     def build_shop_item_card(item):
@@ -83,16 +78,13 @@ def StoreScreen(page: ft.Page):
                 )
                 inv_item.quantity += 1
                 inv_item.save()
-                page.snack_bar = ft.SnackBar(ft.Text(f"Bought {item.name}!"))
-                page.snack_bar.open = True
+                show_snack(page, f"Bought {item.name}!")
                 load_shop_items()
             else:
-                page.snack_bar = ft.SnackBar(ft.Text("Not enough coins!"))
-                page.snack_bar.open = True
-                page.update()
+                show_snack(page, "Not enough coins!")
 
-        return ft.Container(
-            content=ft.Row(
+        return card_container(
+            ft.Row(
                 controls=[
                     _maybe_image_control(item.icon_path),
                     ft.Column([
@@ -100,21 +92,24 @@ def StoreScreen(page: ft.Page):
                         ft.Text(item.description, size=12),
                         ft.Text(f"{item.price} coins")
                     ], expand=True),
-                    ft.ElevatedButton("Buy", on_click=buy)
+                    primary_button("Buy", on_click=buy)
                 ]
-            ),
-            padding=10,
-            bgcolor=ft.Colors.SURFACE_VARIANT,
-            border_radius=10
+            )
         )
 
     load_shop_items()
     user = AuthController.get_current_user()
-    coins_text = f"Coins: {user.coins if user else 0}"
+    coins_text_ctrl = ft.Row([ft.Text('Coins:', weight='bold'), ft.Text(f"{user.coins if user else 0}")])
+
+    def refresh_coins():
+        u = AuthController.get_current_user()
+        coins_text_ctrl.controls[1].value = f"{u.coins if u else 0}"
+        page.update()
+
     return ft.Container(
         content=ft.Column([
-            ft.Text("Shop", size=24, weight="bold"),
-            ft.Text(coins_text, size=18, color=ft.Colors.YELLOW),
+            section_title('Shop'),
+            coins_text_ctrl,
             ft.Divider(),
             shop_items
         ]),
