@@ -55,8 +55,8 @@ def primary_button(label: str, on_click=None, small: bool = False):
         label,
         on_click=on_click,
         style=ft.ButtonStyle(
-            bgcolor={ft.MaterialState.DEFAULT: PRIMARY},
-            color={ft.MaterialState.DEFAULT: SURFACE},
+            bgcolor={ft.ControlState.DEFAULT: PRIMARY},
+            color={ft.ControlState.DEFAULT: SURFACE},
             shape=ft.RoundedRectangleBorder(radius=8),
         ),
         width=style.get("width"),
@@ -82,27 +82,26 @@ def show_snack(page: ft.Page, text: str, seconds: int = 2):
         pass
 
 
-def press_effect(button, page: ft.Page, temp_label: str = '...', duration: float = 0.14):
-    """Simple press feedback: temporarily disable button and set a small label, then restore."""
+def press_effect(button: ft.ElevatedButton, page: ft.Page, temp_label: str="...", duration: float=0.14):
     if not button:
         return
-    orig_disabled = getattr(button, 'disabled', False)
-    orig_text = getattr(button, 'text', None)
-    try:
-        button.disabled = True
-        if orig_text is not None:
-            button.text = temp_label
-        page.update()
-        import asyncio
-        loop = asyncio.get_event_loop()
-        def _restore():
-            button.disabled = orig_disabled
-            if orig_text is not None:
-                button.text = orig_text
-            try:
-                page.update()
-            except Exception:
-                pass
-        loop.call_later(duration, _restore)
-    except Exception:
-        pass
+
+    orig_disabled = button.disabled
+    orig_content = button.content
+
+    button.disabled = True
+    button.content = ft.Text(temp_label)
+    page.update()
+
+    def _restore():
+        button.disabled = orig_disabled
+        button.content = orig_content
+        try:
+            page.update()
+        except Exception:
+            pass
+
+    t = threading.Timer(duration, _restore)
+    t.daemon = True
+    t.start()
+

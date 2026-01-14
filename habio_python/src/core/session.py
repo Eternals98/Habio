@@ -21,7 +21,7 @@ def _write_session(data: dict):
 
 def set_token(token: str):
     data = _read_session()
-    data["access_token"] = token
+    data["access_token"] = "bearer " +token
     _write_session(data)
 
 
