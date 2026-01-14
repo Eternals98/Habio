@@ -33,6 +33,16 @@ def StoreScreen(page: ft.Page):
             pass
 
         # Fallback to local DB
+        # Try server first
+        try:
+            items = list_items()
+            shop_items.controls = [build_shop_item_card_dict(item) for item in items]
+            page.update()
+            return
+        except Exception:
+            pass
+
+        # Fallback to local DB
         items = ShopItem.select()
         shop_items.controls = [build_shop_item_card(item) for item in items]
         page.update()
@@ -86,6 +96,7 @@ def StoreScreen(page: ft.Page):
         return card_container(
             ft.Row(
                 controls=[
+                    _maybe_image_control(item.icon_path),
                     _maybe_image_control(item.icon_path),
                     ft.Column([
                         ft.Text(item.name, weight="bold"),

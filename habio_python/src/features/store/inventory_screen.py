@@ -33,6 +33,15 @@ def InventoryScreen(page: ft.Page):
         except Exception:
             pass
 
+        # Try server
+        try:
+            items = list_inventory()
+            items_column.controls = [build_item_card_dict(it) for it in items]
+            page.update()
+            return
+        except Exception:
+            pass
+
         items = (InventoryItem
                  .select(InventoryItem, ShopItem)
                  .join(ShopItem)
@@ -61,6 +70,7 @@ def InventoryScreen(page: ft.Page):
         return ft.Container(
             content=ft.Row(
                 controls=[
+                    _maybe_image_control(item.icon_path),
                     _maybe_image_control(item.icon_path),
                     ft.Column([
                         ft.Text(item.name, weight="bold"),
