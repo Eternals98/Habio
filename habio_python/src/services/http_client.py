@@ -18,7 +18,7 @@ class HttpClient:
         self.base_url = base_url or BASE_URL
         self.token: Optional[str] = None
 
-    def set_token(self, token: str):
+    def set_token(self, token: Optional[str]):
         self.token = token
 
     def _headers(self):

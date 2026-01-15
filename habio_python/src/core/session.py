@@ -21,13 +21,16 @@ def _write_session(data: dict):
 
 def set_token(token: str):
     data = _read_session()
-    data["access_token"] = "bearer " +token
+    data["access_token"] = token
     _write_session(data)
 
 
 def get_token() -> str | None:
     data = _read_session()
-    return data.get("access_token")
+    token = data.get("access_token")
+    if isinstance(token, str) and token.lower().startswith("bearer "):
+        return token.split(" ", 1)[1]
+    return token
 
 
 def clear_token():
